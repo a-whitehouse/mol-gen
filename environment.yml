@@ -1,0 +1,8 @@
+name: molGenEnv
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - jupyterlab
+  - keras
+  - rdkit
