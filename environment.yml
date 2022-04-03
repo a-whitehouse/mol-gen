@@ -2,7 +2,14 @@ name: molGenEnv
 channels:
   - conda-forge
   - defaults
+  - rdkit
 dependencies:
   - jupyterlab
   - keras
+  - matplotlib
+  - numpy
+  - pandas
+  - python=3.9
   - rdkit
+  - tensorflow
+  - tqdm
