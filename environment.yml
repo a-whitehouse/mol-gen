@@ -4,12 +4,19 @@ channels:
   - defaults
   - rdkit
 dependencies:
+  - black
+  - flake8
+  - isort
+  - mypy
+  - pytest
+  - pytest-mock
+
+
   - jupyterlab
-  - keras
   - matplotlib
   - numpy
   - pandas
-  - python=3.9
+  - python=3.8
   - rdkit
   - tensorflow
   - tqdm

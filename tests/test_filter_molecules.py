@@ -1,6 +1,6 @@
 import pytest
-from mol_gen.filter_molecules import check_value_within_range
 from mol_gen.exceptions import UndesirableMolecule
+from mol_gen.filter_molecules import check_value_within_range
 
 
 class TestCheckValueWithinRange:
