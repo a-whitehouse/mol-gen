@@ -1,10 +1,8 @@
 import pytest
 from mol_gen.exceptions import FilterException, UndesirableMolecule
-from mol_gen import filter_molecules
-from mol_gen.filter_molecules import (
-    check_property_within_range,
-    check_value_within_range,
-)
+from mol_gen.preprocessing import filter_molecules
+from mol_gen.preprocessing.filter_molecules import (
+    check_property_within_range, check_value_within_range)
 from rdkit.Chem import MolFromSmiles
 
 
