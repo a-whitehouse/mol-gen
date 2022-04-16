@@ -106,5 +106,5 @@ def check_value_within_range(
 
     if (max is not None) and (max < val):
         raise UndesirableMolecule(
-            f"Value {val} greater than maximum allowed value {min}."
+            f"Value {val} greater than maximum allowed value {max}."
         )
