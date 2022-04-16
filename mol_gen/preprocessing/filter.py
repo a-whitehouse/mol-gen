@@ -28,7 +28,7 @@ def check_only_allowed_elements_present(mol: Mol, allowed_elements: list[str]) -
     for atom in mol.GetAtoms():
         element = atom.GetSymbol()
         if element not in allowed_elements:
-            raise UndesirableMolecule(f"Element {element} not in allowed_elements")
+            raise UndesirableMolecule(f"Element {element} not in allowed_elements.")
 
 
 def get_preset_check_descriptor_within_range_function(
@@ -42,14 +42,15 @@ def get_preset_check_descriptor_within_range_function(
         descriptor (str): Name of descriptor to calculate.
         min (Optional[float], optional): Minimum allowed value. Defaults to None.
         max (Optional[float], optional): Maximum allowed value. Defaults to None.
+
+    Returns:
+        Callable[[Mol], None]: Preset function.
     """
 
-    def check_descriptor_within_range(mol: Mol):
-        return check_descriptor_within_range(
-            mol, descriptor=descriptor, min=min, max=max
-        )
+    def preset_check_descriptor_within_range(mol: Mol):
+        return check_descriptor_within_range(mol, descriptor, min=min, max=max)
 
-    return check_descriptor_within_range
+    return preset_check_descriptor_within_range
 
 
 def check_descriptor_within_range(
@@ -74,10 +75,15 @@ def check_descriptor_within_range(
     try:
         func = DESCRIPTOR_TO_FUNCTION[descriptor]
     except KeyError:
-        raise FilterException(f"Unrecognised descriptor: {descriptor}")
+        raise FilterException(f"Descriptor {descriptor} unrecognised.")
 
     value = func(mol)
-    check_value_within_range(value, min=min, max=max)
+    try:
+        check_value_within_range(value, min=min, max=max)
+    except UndesirableMolecule as e:
+        raise UndesirableMolecule(
+            f"Descriptor {descriptor} out of allowed range of values: {e}"
+        )
 
 
 def check_value_within_range(
@@ -96,7 +102,9 @@ def check_value_within_range(
         UndesirableMolecule: If descriptor is outside the allowed range of values.
     """
     if (min is not None) and (min > val):
-        raise UndesirableMolecule
+        raise UndesirableMolecule(f"Value {val} less than minimum allowed value {min}.")
 
     if (max is not None) and (max < val):
-        raise UndesirableMolecule
+        raise UndesirableMolecule(
+            f"Value {val} greater than maximum allowed value {min}."
+        )
