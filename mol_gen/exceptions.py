@@ -6,7 +6,15 @@ class ConfigException(MolGenException):
     pass
 
 
-class FilterException(MolGenException):
+class PreprocessingException(MolGenException):
+    pass
+
+
+class ConvertException(PreprocessingException):
+    pass
+
+
+class FilterException(PreprocessingException):
     pass
 
 
