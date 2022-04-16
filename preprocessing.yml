@@ -1,5 +1,5 @@
 convert:
-    - remove_salts
+    - neutralise_salts
     - remove_stereochemistry
 filter:
     allowed_elements: [H, C, N, O, F, S, Cl, Br]

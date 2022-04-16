@@ -18,6 +18,15 @@ PROPERTY_TO_FUNCTION: dict[
 
 
 def check_only_allowed_elements_present(mol: Mol, allowed_elements: list[str]) -> None:
+    """Checks if the atoms in a molecule only correspond to allowed elements.
+
+    Args:
+        mol (Mol): Molecule to check.
+        allowed_elements (list[str]): Allowed elements.
+
+    Raises:
+        UndesirableMolecule: If atoms correspond to other elements.
+    """
     for atom in mol.GetAtoms():
         element = atom.GetSymbol()
         if element not in allowed_elements:
@@ -30,7 +39,6 @@ def check_property_within_range(
     """Calculates property of molecule and compares to allowed min and max values.
 
     Implemented property names are defined in PROPERTY_TO_FUNCTION.
-    Raises exception if the property is outside the allowed range of values.
     Args:
         property (str): Name of property to calculate.
         mol (Mol): Molecule to calculate property with.
@@ -57,7 +65,6 @@ def check_value_within_range(
 ):
     """Checks if value is within the allowed min and max values.
 
-    Raises exception if the property is outside the allowed range of values.
     Args:
         val (Union[int, float]): Value to compare.
         min (Optional[float], optional): Minimum allowed value. Defaults to None.
