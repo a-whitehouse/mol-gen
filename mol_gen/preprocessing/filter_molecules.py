@@ -34,7 +34,10 @@ def check_only_allowed_elements_present(mol: Mol, allowed_elements: list[str]) -
 
 
 def check_property_within_range(
-    property: str, mol: Mol, min: Optional[float] = None, max: Optional[float] = None
+    property: str,
+    mol: Mol,
+    min: Optional[Union[int, float]] = None,
+    max: Optional[Union[int, float]] = None,
 ) -> None:
     """Calculates property of molecule and compares to allowed min and max values.
 
