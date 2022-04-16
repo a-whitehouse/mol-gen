@@ -4,18 +4,37 @@ from rdkit.Chem import MolFromSmiles
 from mol_gen.exceptions import FilterException, UndesirableMolecule
 from mol_gen.preprocessing import filter_molecules
 from mol_gen.preprocessing.filter_molecules import (
+    check_only_allowed_elements_present,
     check_property_within_range,
     check_value_within_range,
 )
 
 
-class TestCheckPropertyWithinRange:
-    @pytest.fixture
-    def mol(self):
-        return MolFromSmiles(
-            "NC1=NNC(C2=CC(N(CC3=CC=C(CN4CCN(C)CC4)C=C3)C=C5)=C5C=C2)=C1C#N"
-        )
+@pytest.fixture
+def mol():
+    return MolFromSmiles(
+        "NC1=NNC(C2=CC(N(CC3=CC=C(CN4CCN(C)CC4)C=C3)C=C5)=C5C=C2)=C1C#N"
+    )
 
+
+class TestCheckOnlyAllowedElementsPresent:
+    def test_raises_exception_given_not_all_elements_allowed(self, mol):
+        allowed_elements = ["H", "C"]
+
+        with pytest.raises(UndesirableMolecule) as excinfo:
+            check_only_allowed_elements_present(mol, allowed_elements)
+
+        assert str(excinfo.value) == "Element N not in allowed_elements"
+
+    @pytest.mark.parametrize(
+        "allowed_elements",
+        [["H", "C", "N"], ["H", "C", "N", "O", "F", "S", "Cl", "Br"]],
+    )
+    def test_allows_molecule_given_all_elements_allowed(self, mol, allowed_elements):
+        check_only_allowed_elements_present(mol, allowed_elements)
+
+
+class TestCheckPropertyWithinRange:
     def test_raises_exception_with_unrecognised_property(self, mol):
         with pytest.raises(FilterException):
             check_property_within_range("unrecognised", mol)

@@ -17,6 +17,13 @@ PROPERTY_TO_FUNCTION: dict[
 }
 
 
+def check_only_allowed_elements_present(mol: Mol, allowed_elements: list[str]) -> None:
+    for atom in mol.GetAtoms():
+        element = atom.GetSymbol()
+        if element not in allowed_elements:
+            raise UndesirableMolecule(f"Element {element} not in allowed_elements")
+
+
 def check_property_within_range(
     property: str, mol: Mol, min: Optional[float] = None, max: Optional[float] = None
 ) -> None:
