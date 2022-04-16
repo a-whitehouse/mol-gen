@@ -1,10 +1,7 @@
 import pytest
 from rdkit.Chem import Mol, MolFromSmiles
 
-from mol_gen.preprocessing.convert_molecules import (
-    neutralise_salts,
-    remove_stereochemistry,
-)
+from mol_gen.preprocessing.convert import neutralise_salts, remove_stereochemistry
 from mol_gen.utils import check_smiles_equivalent_to_molecule
 
 
