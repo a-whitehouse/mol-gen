@@ -2,21 +2,22 @@ convert:
     - remove_salts
     - remove_stereochemistry
 filter:
-    allowed_elements: [H, C, N, O, F, S, Cl, Br, I]
-    hydrogen_bond_acceptors:
-        max: 10
-    hydrogen_bond_donors:
-        max: 5
-    molar_refractivity:
-        min: 40
-        max: 130
-    molecular_weight:
-        min: 180
-        max: 480
-    partition_coefficient:
-        min: -0.4
-        max: 5.6
-    rotatable_bonds:
-        max: 10
-    topological_polar_surface_area:
-        max: 140
+    allowed_elements: [H, C, N, O, F, S, Cl, Br]
+    range:
+        hydrogen_bond_acceptors:
+            max: 10
+        hydrogen_bond_donors:
+            max: 5
+        molar_refractivity:
+            min: 40
+            max: 130
+        molecular_weight:
+            min: 180
+            max: 480
+        partition_coefficient:
+            min: -0.4
+            max: 5.6
+        rotatable_bonds:
+            max: 10
+        topological_polar_surface_area:
+            max: 140
