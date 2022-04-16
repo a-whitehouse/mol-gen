@@ -4,9 +4,7 @@ from rdkit.Chem import Crippen, Lipinski, Mol, rdMolDescriptors
 
 from mol_gen.exceptions import FilterException, UndesirableMolecule
 
-PROPERTY_TO_FUNCTION: dict[
-    str, Callable[[Mol], Union[int, float]], Union[int, float]
-] = {
+DESCRIPTOR_TO_FUNCTION: dict[str, Callable[[Mol], Union[int, float]]] = {
     "hydrogen_bond_acceptors": Lipinski.NumHAcceptors,
     "hydrogen_bond_donors": Lipinski.NumHDonors,
     "molar_refractivity": Crippen.MolMR,
@@ -33,48 +31,50 @@ def check_only_allowed_elements_present(mol: Mol, allowed_elements: list[str]) -
             raise UndesirableMolecule(f"Element {element} not in allowed_elements")
 
 
-def get_preset_check_property_within_range_function(
-    property: str,
+def get_preset_check_descriptor_within_range_function(
+    descriptor: str,
     min: Optional[Union[int, float]] = None,
     max: Optional[Union[int, float]] = None,
 ) -> Callable[[Mol], None]:
-    """Gets instance of check_property_within_range() with property, min and max preset.
+    """Gets instance of check_descriptor_within_range() with descriptor, min and max preset.
 
     Args:
-        property (str): Name of property to calculate.
+        descriptor (str): Name of descriptor to calculate.
         min (Optional[float], optional): Minimum allowed value. Defaults to None.
         max (Optional[float], optional): Maximum allowed value. Defaults to None.
     """
 
-    def check_property_within_range(mol: Mol):
-        return check_property_within_range(mol, property=property, min=min, max=max)
+    def check_descriptor_within_range(mol: Mol):
+        return check_descriptor_within_range(
+            mol, descriptor=descriptor, min=min, max=max
+        )
 
-    return check_property_within_range
+    return check_descriptor_within_range
 
 
-def check_property_within_range(
+def check_descriptor_within_range(
     mol: Mol,
-    property: str,
+    descriptor: str,
     min: Optional[Union[int, float]] = None,
     max: Optional[Union[int, float]] = None,
 ) -> None:
-    """Calculates property of molecule and compares to allowed min and max values.
+    """Calculates descriptor of molecule and compares to allowed min and max values.
 
-    Implemented property names are defined in PROPERTY_TO_FUNCTION.
+    Implemented descriptor names are defined in DESCRIPTOR_TO_FUNCTION.
     Args:
-        property (str): Name of property to calculate.
-        mol (Mol): Molecule to calculate property with.
+        descriptor (str): Name of descriptor to calculate.
+        mol (Mol): Molecule to calculate descriptor with.
         min (Optional[float], optional): Minimum allowed value. Defaults to None.
         max (Optional[float], optional): Maximum allowed value. Defaults to None.
 
     Raises:
-        FilterException: If property to calculate is unrecognised.
-        UndesirableMolecule: If property is outside the allowed range of values.
+        FilterException: If descriptor to calculate is unrecognised.
+        UndesirableMolecule: If descriptor is outside the allowed range of values.
     """
     try:
-        func = PROPERTY_TO_FUNCTION[property]
+        func = DESCRIPTOR_TO_FUNCTION[descriptor]
     except KeyError:
-        raise FilterException(f"Unrecognised property: {property}")
+        raise FilterException(f"Unrecognised descriptor: {descriptor}")
 
     value = func(mol)
     check_value_within_range(value, min=min, max=max)
@@ -93,7 +93,7 @@ def check_value_within_range(
         max (Optional[float], optional): Maximum allowed value. Defaults to None.
 
     Raises:
-        UndesirableMolecule: If property is outside the allowed range of values.
+        UndesirableMolecule: If descriptor is outside the allowed range of values.
     """
     if (min is not None) and (min > val):
         raise UndesirableMolecule

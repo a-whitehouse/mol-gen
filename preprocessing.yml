@@ -3,7 +3,7 @@ convert:
     - remove_stereochemistry
 filter:
     allowed_elements: [H, C, N, O, F, S, Cl, Br]
-    range:
+    range_filters:
         hydrogen_bond_acceptors:
             max: 10
         hydrogen_bond_donors:

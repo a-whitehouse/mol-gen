@@ -4,8 +4,8 @@ from rdkit.Chem import MolFromSmiles
 from mol_gen.exceptions import FilterException, UndesirableMolecule
 from mol_gen.preprocessing import filter
 from mol_gen.preprocessing.filter import (
+    check_descriptor_within_range,
     check_only_allowed_elements_present,
-    check_property_within_range,
     check_value_within_range,
 )
 
@@ -34,13 +34,13 @@ class TestCheckOnlyAllowedElementsPresent:
         check_only_allowed_elements_present(mol, allowed_elements)
 
 
-class TestCheckPropertyWithinRange:
-    def test_raises_exception_with_unrecognised_property(self, mol):
+class TestCheckDescriptorWithinRange:
+    def test_raises_exception_with_unrecognised_descriptor(self, mol):
         with pytest.raises(FilterException):
-            check_property_within_range("unrecognised", mol)
+            check_descriptor_within_range("unrecognised", mol)
 
     @pytest.mark.parametrize(
-        "property",
+        "descriptor",
         [
             "hydrogen_bond_acceptors",
             "hydrogen_bond_donors",
@@ -51,16 +51,16 @@ class TestCheckPropertyWithinRange:
             "topological_polar_surface_area",
         ],
     )
-    def test_completes_with_recognised_property(self, property, mol):
-        check_property_within_range(mol, property=property)
+    def test_completes_with_recognised_descriptor(self, descriptor, mol):
+        check_descriptor_within_range(mol, descriptor=descriptor)
 
     def test_calls_check_value_within_range_as_expected_given_min_and_max_undefined(
         self, mocker, mol
     ):
         mock_check_val = mocker.patch.object(filter, "check_value_within_range")
-        filter.PROPERTY_TO_FUNCTION["test_func"] = lambda x: 5
+        filter.DESCRIPTOR_TO_FUNCTION["test_func"] = lambda x: 5
 
-        check_property_within_range(mol, property="test_func")
+        check_descriptor_within_range(mol, descriptor="test_func")
 
         mock_check_val.assert_called_once_with(5, min=None, max=None)
 
@@ -68,9 +68,9 @@ class TestCheckPropertyWithinRange:
         self, mocker, mol
     ):
         mock_check_val = mocker.patch.object(filter, "check_value_within_range")
-        filter.PROPERTY_TO_FUNCTION["test_func"] = lambda x: 5
+        filter.DESCRIPTOR_TO_FUNCTION["test_func"] = lambda x: 5
 
-        check_property_within_range(mol, property="test_func", min=4, max=6)
+        check_descriptor_within_range(mol, descriptor="test_func", min=4, max=6)
 
         mock_check_val.assert_called_once_with(5, min=4, max=6)
 
@@ -78,9 +78,9 @@ class TestCheckPropertyWithinRange:
         self, mocker, mol
     ):
         mock_check_val = mocker.patch.object(filter, "check_value_within_range")
-        filter.PROPERTY_TO_FUNCTION["test_func"] = lambda x: 5
+        filter.DESCRIPTOR_TO_FUNCTION["test_func"] = lambda x: 5
 
-        check_property_within_range(mol, property="test_func", min=4)
+        check_descriptor_within_range(mol, descriptor="test_func", min=4)
 
         mock_check_val.assert_called_once_with(5, min=4, max=None)
 
@@ -88,9 +88,9 @@ class TestCheckPropertyWithinRange:
         self, mocker, mol
     ):
         mock_check_val = mocker.patch.object(filter, "check_value_within_range")
-        filter.PROPERTY_TO_FUNCTION["test_func"] = lambda x: 5
+        filter.DESCRIPTOR_TO_FUNCTION["test_func"] = lambda x: 5
 
-        check_property_within_range(mol, property="test_func", max=6)
+        check_descriptor_within_range(mol, descriptor="test_func", max=6)
 
         mock_check_val.assert_called_once_with(5, min=None, max=6)
 
