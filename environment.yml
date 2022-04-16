@@ -11,12 +11,11 @@ dependencies:
   - pytest
   - pytest-mock
 
-
   - jupyterlab
   - matplotlib
   - numpy
   - pandas
-  - python=3.8
+  - python=3.9
   - rdkit
   - tensorflow
   - tqdm

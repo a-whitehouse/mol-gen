@@ -1,59 +1,45 @@
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 
-from rdkit.Chem import Mol
-from rdkit.Chem.Crippen import MolLogP, MolMR
-from rdkit.Chem.Lipinski import NumHAcceptors, NumHDonors
-from rdkit.Chem.rdMolDescriptors import CalcExactMolWt, CalcNumRotatableBonds, CalcTPSA
+from rdkit.Chem import Crippen, Lipinski, Mol, rdMolDescriptors
 
-from mol_gen.exceptions import UndesirableMolecule
+from mol_gen.exceptions import FilterException, UndesirableMolecule
+
+PROPERTY_TO_FUNCTION: dict[
+    str, Callable[[Mol], Union[int, float]], Union[int, float]
+] = {
+    "hydrogen_bond_acceptors": Lipinski.NumHAcceptors,
+    "hydrogen_bond_donors": Lipinski.NumHDonors,
+    "molar_refractivity": Crippen.MolMR,
+    "molecular_weight": rdMolDescriptors.CalcExactMolWt,
+    "partition_coefficient": Crippen.MolLogP,
+    "rotatable_bonds": rdMolDescriptors.CalcNumRotatableBonds,
+    "topological_polar_surface_area": rdMolDescriptors.CalcTPSA,
+}
 
 
-def check_hydrogen_bond_acceptors(
-    mol: Mol, min: Optional[float] = None, max: Optional[float] = None
+def check_property_within_range(
+    property: str, mol: Mol, min: Optional[float] = None, max: Optional[float] = None
 ) -> None:
-    value = NumHAcceptors(mol)
-    check_value_within_range(value, min=min, max=max)
+    """Calculates property of molecule and compares to allowed min and max values.
 
+    Implemented property names are defined in PROPERTY_TO_FUNCTION.
+    Raises exception if the property is outside the allowed range of values.
+    Args:
+        property (str): Name of property to calculate.
+        mol (Mol): Molecule to calculate property with.
+        min (Optional[float], optional): Minimum allowed value. Defaults to None.
+        max (Optional[float], optional): Maximum allowed value. Defaults to None.
 
-def check_hydrogen_bond_donors(
-    mol: Mol, min: Optional[float] = None, max: Optional[float] = None
-) -> None:
-    value = NumHDonors(mol)
-    check_value_within_range(value, min=min, max=max)
+    Raises:
+        FilterException: If property to calculate is unrecognised.
+        UndesirableMolecule: If property is outside the allowed range of values.
+    """
+    try:
+        func = PROPERTY_TO_FUNCTION[property]
+    except KeyError:
+        raise FilterException(f"Unrecognised property: {property}")
 
-
-def check_molar_refractivity(
-    mol: Mol, min: Optional[float] = None, max: Optional[float] = None
-) -> None:
-    value = MolMR(mol)
-    check_value_within_range(value, min=min, max=max)
-
-
-def check_molecular_weight(
-    mol: Mol, min: Optional[float] = None, max: Optional[float] = None
-) -> None:
-    value = CalcExactMolWt(mol)
-    check_value_within_range(value, min=min, max=max)
-
-
-def check_partition_coefficient(
-    mol: Mol, min: Optional[float] = None, max: Optional[float] = None
-) -> None:
-    value = MolLogP(mol)
-    check_value_within_range(value, min=min, max=max)
-
-
-def check_rotatable_bonds(
-    mol: Mol, min: Optional[float] = None, max: Optional[float] = None
-) -> None:
-    value = CalcNumRotatableBonds(mol)
-    check_value_within_range(value, min=min, max=max)
-
-
-def check_topological_polar_surface_area(
-    mol: Mol, min: Optional[float] = None, max: Optional[float] = None
-) -> None:
-    value = CalcTPSA(mol)
+    value = func(mol)
     check_value_within_range(value, min=min, max=max)
 
 
@@ -62,6 +48,17 @@ def check_value_within_range(
     min: Optional[Union[int, float]] = None,
     max: Optional[Union[int, float]] = None,
 ):
+    """Checks if value is within the allowed min and max values.
+
+    Raises exception if the property is outside the allowed range of values.
+    Args:
+        val (Union[int, float]): Value to compare.
+        min (Optional[float], optional): Minimum allowed value. Defaults to None.
+        max (Optional[float], optional): Maximum allowed value. Defaults to None.
+
+    Raises:
+        UndesirableMolecule: If property is outside the allowed range of values.
+    """
     if (min is not None) and (min > val):
         raise UndesirableMolecule
 

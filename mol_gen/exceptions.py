@@ -1,6 +1,9 @@
 class MolGenException(Exception):
     pass
 
+class FilterException(MolGenException):
+    pass
 
-class UndesirableMolecule(MolGenException):
+
+class UndesirableMolecule(FilterException):
     pass
