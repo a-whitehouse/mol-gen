@@ -24,7 +24,7 @@ class TestCheckOnlyAllowedElementsPresent:
         with pytest.raises(UndesirableMolecule) as excinfo:
             check_only_allowed_elements_present(mol, allowed_elements)
 
-        assert str(excinfo.value) == "Element N not in allowed_elements"
+        assert str(excinfo.value) == "Element N not in allowed_elements."
 
     @pytest.mark.parametrize(
         "allowed_elements",
@@ -108,9 +108,13 @@ class TestCheckValueWithinRange:
         check_value_within_range(value, max=6)
 
     def test_raises_exception_given_min_exceeded(self):
-        with pytest.raises(UndesirableMolecule):
+        with pytest.raises(UndesirableMolecule) as excinfo:
             check_value_within_range(3.9, min=4)
 
+        assert str(excinfo.value) == "Value 3.9 less than minimum allowed value 4."
+
     def test_raises_exception_given_max_exceeded(self):
-        with pytest.raises(UndesirableMolecule):
+        with pytest.raises(UndesirableMolecule) as excinfo:
             check_value_within_range(6.1, max=6)
+
+        assert str(excinfo.value) == "Value 6.1 greater than maximum allowed value 6."

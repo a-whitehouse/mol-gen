@@ -2,7 +2,19 @@ class MolGenException(Exception):
     pass
 
 
-class FilterException(MolGenException):
+class ConfigException(MolGenException):
+    pass
+
+
+class PreprocessingException(MolGenException):
+    pass
+
+
+class ConvertException(PreprocessingException):
+    pass
+
+
+class FilterException(PreprocessingException):
     pass
 
 

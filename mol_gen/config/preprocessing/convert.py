@@ -5,6 +5,7 @@ from typing import Callable
 
 from rdkit.Chem import Mol
 
+from mol_gen.exceptions import ConfigException
 from mol_gen.preprocessing.convert import neutralise_salts, remove_stereochemistry
 
 CONVERT_METHODS = {
@@ -19,4 +20,23 @@ class ConvertConfig:
 
     @classmethod
     def parse_config(cls, config: list[str]) -> ConvertConfig:
-        return cls(methods=[CONVERT_METHODS.get(i) for i in config])
+        """Parse convert methods section of preprocessing config.
+
+        Args:
+            config (list[str]): Section of config.
+
+        Raises:
+            ConfigException: If requested convert method unrecognised.
+
+        Returns:
+            ConvertConfig: Class representing section of config.
+        """
+        methods = []
+
+        for method in config:
+            try:
+                methods.append(CONVERT_METHODS[method])
+            except KeyError:
+                raise ConfigException(f"Convert method {method} unrecognised.")
+
+        return cls(methods=methods)
