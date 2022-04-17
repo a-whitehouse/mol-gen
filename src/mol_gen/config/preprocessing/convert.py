@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Callable
 
+from attr import frozen
 from rdkit.Chem import Mol
 
 from mol_gen.exceptions import ConfigException
@@ -14,7 +14,7 @@ CONVERT_METHODS = {
 }
 
 
-@dataclass
+@frozen
 class ConvertConfig:
     methods: list[Callable[[Mol], Mol]]
 

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
+
+from attr import frozen
 
 from mol_gen.config.preprocessing.convert import ConvertConfig
 from mol_gen.config.preprocessing.filter import FilterConfig
 
 
-@dataclass
+@frozen
 class PreprocessingConfig:
     convert: ConvertConfig
     filter: FilterConfig
