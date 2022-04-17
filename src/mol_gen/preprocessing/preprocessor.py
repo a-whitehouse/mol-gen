@@ -65,10 +65,10 @@ class MoleculePreprocessor:
             UndesirableMolecule: If molecule fails a filter method.
         """
         # Apply allowed elements filter
-        method = self.config.filter.allowed_elements.get_method()
+        method = self.config.filter.elements_filter.get_method()
         method(mol)
 
         # Apply range filters
-        for filter in self.config.filter.range_filters:
+        for filter in self.config.filter.range_filters.values():
             method = filter.get_method()
             method(mol)
