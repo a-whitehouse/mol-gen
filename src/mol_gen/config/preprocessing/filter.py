@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Callable, Optional, Union
 
+from attr import frozen
 from rdkit.Chem import GetPeriodicTable, Mol
 
 from mol_gen.exceptions import ConfigException
@@ -13,9 +13,9 @@ from mol_gen.preprocessing.filter import (
 )
 
 
-@dataclass
+@frozen
 class FilterConfig:
-    allowed_elements: ElementsFilter
+    elements_filter: ElementsFilter
     range_filters: list[RangeFilter]
 
     @classmethod
@@ -32,17 +32,17 @@ class FilterConfig:
             FilterConfig: Class representing section of config.
         """
         return cls(
-            allowed_elements=ElementsFilter.parse_config(
+            elements_filter=ElementsFilter.parse_config(
                 config.get("allowed_elements", [])
             ),
-            range_filters=[
-                RangeFilter.parse_config({k: v})
+            range_filters={
+                k: RangeFilter.parse_config({k: v})
                 for k, v in config.get("range_filters", {}).items()
-            ],
+            },
         )
 
 
-@dataclass
+@frozen
 class ElementsFilter:
     allowed_elements: list[str]
 
@@ -87,7 +87,7 @@ class ElementsFilter:
         return preset_check_only_allowed_elements_present
 
 
-@dataclass
+@frozen
 class RangeFilter:
     descriptor: str
     min: Optional[Union[int, float]] = None

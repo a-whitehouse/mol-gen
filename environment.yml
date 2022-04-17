@@ -12,6 +12,7 @@ dependencies:
   - pytest
   - pytest-mock
 
+  - attrs
   - dask
   - jupyterlab
   - matplotlib
