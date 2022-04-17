@@ -10,7 +10,7 @@ from mol_gen.exceptions import ConfigException
 
 class TestFilterConfig:
     @pytest.fixture
-    def config_section(self):
+    def valid_config_section(self):
         return {
             "allowed_elements": ["H", "C", "N", "O", "F", "S", "Cl", "Br"],
             "range_filters": {
@@ -20,17 +20,22 @@ class TestFilterConfig:
             },
         }
 
-    def test_parse_config_returns_expected_config_given_valid_config_section(
-        self, config_section
+    def test_parse_config_completes_given_valid_config_section(
+        self, valid_config_section
     ):
-        config = FilterConfig.parse_config(config_section)
+        FilterConfig.parse_config(valid_config_section)
+
+    def test_parse_config_returns_expected_config_given_valid_config_section(
+        self, valid_config_section
+    ):
+        config = FilterConfig.parse_config(valid_config_section)
 
         assert isinstance(config, FilterConfig)
 
     def test_parse_config_sets_expected_allowed_elements_given_valid_config_section(
-        self, config_section
+        self, valid_config_section
     ):
-        config = FilterConfig.parse_config(config_section)
+        config = FilterConfig.parse_config(valid_config_section)
         allowed_elements = config.elements_filter.allowed_elements
 
         assert isinstance(config.elements_filter, ElementsFilter)
@@ -49,9 +54,9 @@ class TestFilterConfig:
         ],
     )
     def test_parse_config_sets_expected_range_filters_given_valid_config_section(
-        self, config_section, expected_descriptor, expected_min, expected_max
+        self, valid_config_section, expected_descriptor, expected_min, expected_max
     ):
-        config = FilterConfig.parse_config(config_section)
+        config = FilterConfig.parse_config(valid_config_section)
         range_filter = config.range_filters[expected_descriptor]
 
         assert isinstance(range_filter, RangeFilter)
@@ -73,23 +78,25 @@ class TestFilterConfig:
 
 class TestElementsFilter:
     @pytest.fixture
-    def config_section(self):
+    def valid_config_section(self):
         return ["H", "C", "N", "O", "F", "S", "Cl", "Br"]
 
-    def test_parse_config_completes_given_valid_config_section(self, config_section):
-        ElementsFilter.parse_config(config_section)
+    def test_parse_config_completes_given_valid_config_section(
+        self, valid_config_section
+    ):
+        ElementsFilter.parse_config(valid_config_section)
 
     def test_parse_config_returns_expected_config_given_valid_config_section(
-        self, config_section
+        self, valid_config_section
     ):
-        config = ElementsFilter.parse_config(config_section)
+        config = ElementsFilter.parse_config(valid_config_section)
 
         assert isinstance(config, ElementsFilter)
 
     def test_parse_config_sets_expected_attributes_given_valid_config_section(
-        self, config_section
+        self, valid_config_section
     ):
-        config = ElementsFilter.parse_config(config_section)
+        config = ElementsFilter.parse_config(valid_config_section)
 
         assert config.allowed_elements == ["H", "C", "N", "O", "F", "S", "Cl", "Br"]
 
@@ -111,21 +118,23 @@ class TestElementsFilter:
 
 class TestRangeFilter:
     @pytest.fixture
-    def config_section(self):
+    def valid_config_section(self):
         return {"molecular_weight": {"min": 180, "max": 480}}
 
-    def test_parse_config_completes_given_valid_config_section(self, config_section):
-        RangeFilter.parse_config(config_section)
+    def test_parse_config_completes_given_valid_config_section(
+        self, valid_config_section
+    ):
+        RangeFilter.parse_config(valid_config_section)
 
     def test_parse_config_returns_expected_config_given_valid_config_section(
-        self, config_section
+        self, valid_config_section
     ):
-        config = RangeFilter.parse_config(config_section)
+        config = RangeFilter.parse_config(valid_config_section)
 
         assert isinstance(config, RangeFilter)
 
     @pytest.mark.parametrize(
-        "config_section, expected_descriptor, expected_min, expected_max",
+        "valid_config_section, expected_descriptor, expected_min, expected_max",
         [
             (
                 {"molecular_weight": {"min": 180, "max": 480}},
@@ -139,9 +148,9 @@ class TestRangeFilter:
         ],
     )
     def test_parse_config_sets_expected_attributes_given_valid_config_section(
-        self, config_section, expected_descriptor, expected_min, expected_max
+        self, valid_config_section, expected_descriptor, expected_min, expected_max
     ):
-        config = RangeFilter.parse_config(config_section)
+        config = RangeFilter.parse_config(valid_config_section)
 
         assert config.descriptor == expected_descriptor
         assert config.min == expected_min
