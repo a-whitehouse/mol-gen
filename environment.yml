@@ -21,3 +21,7 @@ dependencies:
   - rdkit
   - tensorflow
   - tqdm
+
+  - pip~=22.0
+  - pip:
+    - -e .

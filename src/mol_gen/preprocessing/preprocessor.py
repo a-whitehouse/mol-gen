@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from rdkit.Chem import Mol, MolFromSmiles, MolToSmiles
 
 from mol_gen.config.preprocessing import PreprocessingConfig
-from mol_gen.exceptions import ConvertException
+from mol_gen.exceptions import ConvertException, FilterException
 from mol_gen.preprocessing.filter import check_only_allowed_elements_present
 
 
@@ -24,9 +24,16 @@ class MoleculePreprocessor:
             str: SMILES string of preprocessed molecule.
         """
         mol = MolFromSmiles(smiles)
-        mol = self.convert_molecule(mol)
 
-        self.apply_filters(mol)
+        try:
+            mol = self.convert_molecule(mol)
+        except ConvertException:
+            return
+
+        try:
+            self.apply_filters(mol)
+        except FilterException:
+            return
 
         smiles = MolToSmiles(mol)
         return smiles
