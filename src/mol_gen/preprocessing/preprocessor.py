@@ -4,7 +4,6 @@ from rdkit.Chem import Mol, MolFromSmiles, MolToSmiles
 
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.exceptions import ConvertException, FilterException
-from mol_gen.preprocessing.filter import check_only_allowed_elements_present
 
 
 @dataclass
@@ -26,7 +25,7 @@ class MoleculePreprocessor:
         mol = MolFromSmiles(smiles)
 
         try:
-            mol = self.convert_molecule(mol)
+            mol = self.apply_conversions(mol)
         except ConvertException:
             return
 
@@ -38,7 +37,7 @@ class MoleculePreprocessor:
         smiles = MolToSmiles(mol)
         return smiles
 
-    def convert_molecule(self, mol: Mol) -> Mol:
+    def apply_conversions(self, mol: Mol) -> Mol:
         """Apply conversion methods to molecule.
 
         Args:
@@ -65,30 +64,11 @@ class MoleculePreprocessor:
         Raises:
             UndesirableMolecule: If molecule fails a filter method.
         """
-        self.apply_allowed_elements_filter(mol)
-        self.apply_range_filters(mol)
+        # Apply allowed elements filter
+        method = self.config.filter.allowed_elements.get_method()
+        method(mol)
 
-    def apply_allowed_elements_filter(self, mol: Mol) -> None:
-        """Check whether molecular descriptors are within allowed values.
-
-        Args:
-            mol (Mol): Molecule to test.
-
-        Raises:
-            UndesirableMolecule: If molecule fails the filter method.
-        """
-        allowed_elements = self.config.filter.allowed_elements
-        check_only_allowed_elements_present(mol, allowed_elements)
-
-    def apply_range_filters(self, mol: Mol) -> None:
-        """Check whether molecular descriptors are within allowed values.
-
-        Args:
-            mol (Mol): Molecule to test.
-
-        Raises:
-            UndesirableMolecule: If molecule fails a filter method.
-        """
+        # Apply range filters
         for filter in self.config.filter.range_filters:
-            filter_method = filter.get_method()
-            filter_method(mol)
+            method = filter.get_method()
+            method(mol)
