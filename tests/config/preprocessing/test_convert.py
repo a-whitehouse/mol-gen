@@ -1,8 +1,14 @@
 import pytest
+from rdkit.Chem import MolFromSmiles, MolToSmiles
 
-from mol_gen.config.preprocessing.convert import ConvertConfig
+from mol_gen.config.preprocessing.convert import CONVERT_METHODS, ConvertConfig
 from mol_gen.exceptions import ConfigException
 from mol_gen.preprocessing.convert import neutralise_salts, remove_stereochemistry
+
+
+@pytest.fixture
+def mol():
+    return MolFromSmiles("CCC")
 
 
 class TestConvertConfig:
@@ -39,3 +45,26 @@ class TestConvertConfig:
             ConvertConfig.parse_config(
                 ["neutralise_salts", "unsupported"],
             )
+
+    def test_apply_completes_given_valid_config_section(
+        self, valid_config_section, mol
+    ):
+        config = ConvertConfig.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+    def test_apply_calls_methods_and_returns_molecule_as_expected(
+        self, mocker, valid_config_section, mol
+    ):
+        mocker.patch.dict(
+            CONVERT_METHODS,
+            {
+                "neutralise_salts": lambda x: MolToSmiles(x) + "_neutral",
+                "remove_stereochemistry": lambda x: x + "_achiral",
+            },
+        )
+        config = ConvertConfig.parse_config(valid_config_section)
+
+        converted_mol = config.apply(mol)
+
+        assert converted_mol == "CCC_neutral_achiral"

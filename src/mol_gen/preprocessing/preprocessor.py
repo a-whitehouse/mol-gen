@@ -46,14 +46,7 @@ class MoleculePreprocessor:
         Returns:
             str: Converted molecule.
         """
-        convert_methods = self.config.convert.methods
-        for method in convert_methods:
-            try:
-                mol = method(mol)
-            except Exception as e:
-                raise ConvertException(f"Convert method {method} failed: {e}")
-
-        return mol
+        return self.config.convert.apply(mol)
 
     def apply_filters(self, mol: Mol) -> None:
         """Check whether molecule passes filters defined in preprocessing config.
