@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from attr import frozen
+from attrs import frozen
 
 from mol_gen.config.preprocessing.convert import ConvertConfig
 from mol_gen.config.preprocessing.filter import FilterConfig

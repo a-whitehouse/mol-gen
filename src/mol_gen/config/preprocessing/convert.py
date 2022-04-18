@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from attr import frozen
+from attrs import frozen
 from rdkit.Chem import Mol
 
 from mol_gen.exceptions import ConfigException, ConvertException

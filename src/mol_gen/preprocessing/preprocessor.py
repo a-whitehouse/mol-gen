@@ -1,12 +1,11 @@
-from dataclasses import dataclass
-
+from attrs import frozen
 from rdkit.Chem import Mol, MolFromSmiles, MolToSmiles
 
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.exceptions import ConvertException, FilterException
 
 
-@dataclass
+@frozen
 class MoleculePreprocessor:
     config: PreprocessingConfig
 

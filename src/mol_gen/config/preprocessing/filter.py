@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, Union
 
-from attr import field, frozen
+from attrs import field, frozen
 from rdkit.Chem import GetPeriodicTable, Mol
 
 from mol_gen.exceptions import ConfigException
