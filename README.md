@@ -46,7 +46,85 @@ I use the [pre-commit](https://pre-commit.com/) library to enforce code quality,
 
 ## Preprocessing
 
-TODO
+I have downloaded a large [dataset](https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Extras/CID-SMILES.gz) of molecules from [PubChem](https://pubchem.ncbi.nlm.nih.gov/) for this project.
+Before training I want to preprocess this dataset to neutralise salts, remove stereochemical information, and filter molecules that are not [druglike](https://en.wikipedia.org/wiki/Druglikeness).
+The preprocessing step should be configurable so I can train the neural networks on multiple datasets, each with different properties.
+To achieve this, the preprocessing step requires a config file.
+
+To run the preprocessing step, execute the [run_preprocessing.py](scripts/run_preprocessing.py) script:
+```
+python scripts/run_preprocessing.py --config <path to config file> --input <path to directory containing full dataset of molecules> --output <path to directory to write preprocessed dataset>
+```
+
+The input directory should contain csv files with a "SMILES" column containing SMILES strings of molecules.
+
+The config yml file should have the following structure:
+```yaml
+convert:
+    - <convert method a>
+    - <convert method b>
+filter:
+    allowed_elements: [H, C, N, ...]
+    range_filters:
+        <descriptor a>:
+            min: <numeric>
+            max: <numeric>
+        <descriptor b>:
+            min: <numeric>
+            max: <numeric>
+```
+
+An example config file can be found [here](examples/preprocessing.yml).
+
+### convert
+
+Here you can specify which conversion methods should be executed by the preprocessing step.
+
+Example:
+```yaml
+convert:
+    - neutralise_salts
+    - remove_stereochemistry
+```
+
+### filter
+
+**allowed_elements**
+
+Here you can specify the elements that molecules are allowed to have.
+If a molecule has an element that is not in this list, it will be filtered out.
+
+Example:
+```yaml
+    allowed_elements: [H, C, N, O, F, S, Cl, Br]
+```
+
+**range_filters**
+
+Here you can specify the allowed ranges of values for descriptors that molecules can have.
+Either a min or max value, or both, should be specified.
+
+Example:
+```yaml
+    range_filters:
+        hydrogen_bond_acceptors:
+            max: 10
+        hydrogen_bond_donors:
+            max: 5
+        molar_refractivity:
+            min: 40
+            max: 130
+        molecular_weight:
+            min: 180
+            max: 480
+        partition_coefficient:
+            min: -0.4
+            max: 5.6
+        rotatable_bonds:
+            max: 10
+        topological_polar_surface_area:
+            max: 140
+```
 
 ## Training
 
