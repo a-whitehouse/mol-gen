@@ -5,7 +5,7 @@ from typing import Callable
 from attr import frozen
 from rdkit.Chem import Mol
 
-from mol_gen.exceptions import ConfigException
+from mol_gen.exceptions import ConfigException, ConvertException
 from mol_gen.preprocessing.convert import neutralise_salts, remove_stereochemistry
 
 CONVERT_METHODS = {
@@ -40,3 +40,23 @@ class ConvertConfig:
                 raise ConfigException(f"Convert method {method} unrecognised.")
 
         return cls(methods=methods)
+
+    def apply(self, mol: Mol) -> Mol:
+        """Applies convert methods to molecule.
+
+        Args:
+            mol (Mol): Molecule to convert.
+
+        Raises:
+            ConvertException: If molecule fails a method.
+
+        Returns:
+            Mol: Converted molecule.
+        """
+        for method in self.methods:
+            try:
+                mol = method(mol)
+            except Exception as e:
+                raise ConvertException(f"Convert method {method} failed: {e}")
+
+        return mol
