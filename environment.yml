@@ -4,26 +4,33 @@ channels:
   - defaults
   - rdkit
 dependencies:
+  # Linters
   - black
   - flake8
   - isort
   - mypy
   - pre-commit
+
+  # Testing
   - pytest
   - pytest-mock
 
+  # Python
+  - python=3.9
+
+  # Libraries
   - attrs
   - dask
   - jupyterlab
   - matplotlib
   - numpy
   - pandas
-  - python=3.9
   - rdkit
   - selfies
   - tensorflow
   - tqdm
 
+  # src/mol_gen/
   - pip~=22.0
   - pip:
     - -e .
