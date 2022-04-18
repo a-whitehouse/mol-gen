@@ -18,6 +18,7 @@ After a few weeks, I put this project on indefinite hold and focused my efforts 
 
 This new project is my naive exploration on the use of [recurrent neural networks (RNNs)](https://en.wikipedia.org/wiki/Recurrent_neural_network) for *de novo* molecule generation, as in the paper by Gupta *et al.* and many other papers that I haven't had the time to read.
 By doing so, I hope to gain a better understanding of RNNs, LSTMs, variational autoencoders, and cheminformatics in general.
+I will definitely retread ground that was covered by previous work, but I have to start somewhere.
 
 ## Project Structure
 
@@ -28,7 +29,20 @@ This project is intended to have 3 distinct sections:
 
 ## Environment Setup
 
-TODO
+I am using an environment with Python 3.9 managed by [Anaconda](https://www.anaconda.com/) and run in Windows.
+To recreate it from my [environment.yml](environment.yml) file, use the following in the command prompt:
+
+```
+conda env create -f environment.yml
+conda activate molGenEnv
+```
+
+## Development
+
+I am using [Visual Studio Code](https://code.visualstudio.com/) for my development work.
+You can find the settings I used in my workspace [here](.vscode/settings.json), including the use of the linters [black](https://black.readthedocs.io/en/stable/) and [flake8](https://flake8.pycqa.org/en/latest/).
+
+I use the [pre-commit](https://pre-commit.com/) library to enforce code quality, with my specific git hooks described [here](.pre-commit-config.yaml).
 
 ## Preprocessing
 
