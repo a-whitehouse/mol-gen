@@ -1,11 +1,22 @@
-import pytest
+from unittest.mock import call
 
+import pytest
+from rdkit.Chem import MolFromSmiles
+
+from mol_gen.config.preprocessing import filter
 from mol_gen.config.preprocessing.filter import (
     ElementsFilter,
     FilterConfig,
     RangeFilter,
 )
 from mol_gen.exceptions import ConfigException
+
+
+@pytest.fixture
+def mol():
+    return MolFromSmiles(
+        "NC1=NNC(C2=CC(N(CC3=CC=C(CN4CCN(C)CC4)C=C3)C=C5)=C5C=C2)=C1C#N"
+    )
 
 
 class TestFilterConfig:
@@ -75,6 +86,43 @@ class TestFilterConfig:
 
         assert config.range_filters == {}
 
+    def test_apply_completes_given_valid_config_section(
+        self, valid_config_section, mol
+    ):
+        config = FilterConfig.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+    def test_apply_calls_elements_filter_function_as_expected(
+        self, mocker, valid_config_section, mol
+    ):
+        mock_filter_func = mocker.patch.object(
+            filter, "check_only_allowed_elements_present"
+        )
+        config = FilterConfig.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+        mock_filter_func.assert_called_once_with(
+            mol, allowed_elements=["H", "C", "N", "O", "F", "S", "Cl", "Br"]
+        )
+
+    def test_apply_calls_range_filter_functions_as_expected(
+        self, mocker, valid_config_section, mol
+    ):
+        mock_filter_func = mocker.patch.object(filter, "check_descriptor_within_range")
+        config = FilterConfig.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+        mock_filter_func.assert_has_calls(
+            [
+                call(mol, "molecular_weight", min=180, max=480),
+                call(mol, "partition_coefficient", min=-0.4, max=None),
+                call(mol, "rotatable_bonds", min=None, max=10),
+            ]
+        )
+
 
 class TestElementsFilter:
     @pytest.fixture
@@ -114,6 +162,27 @@ class TestElementsFilter:
             ElementsFilter.parse_config(allowed_elements)
 
         assert str(excinfo.value) == expected
+
+    def test_apply_completes_given_valid_config_section(
+        self, valid_config_section, mol
+    ):
+        config = ElementsFilter.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+    def test_apply_calls_filter_function_as_expected(
+        self, mocker, valid_config_section, mol
+    ):
+        mock_filter_func = mocker.patch.object(
+            filter, "check_only_allowed_elements_present"
+        )
+        config = ElementsFilter.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+        mock_filter_func.assert_called_once_with(
+            mol, allowed_elements=["H", "C", "N", "O", "F", "S", "Cl", "Br"]
+        )
 
 
 class TestRangeFilter:
@@ -178,4 +247,23 @@ class TestRangeFilter:
         assert (
             str(excinfo.value)
             == "Maximum value 480 for molecular_weight is not a number."
+        )
+
+    def test_apply_completes_given_valid_config_section(
+        self, valid_config_section, mol
+    ):
+        config = RangeFilter.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+    def test_apply_calls_filter_function_as_expected(
+        self, mocker, valid_config_section, mol
+    ):
+        mock_filter_func = mocker.patch.object(filter, "check_descriptor_within_range")
+        config = RangeFilter.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+        mock_filter_func.assert_called_once_with(
+            mol, "molecular_weight", min=180, max=480
         )

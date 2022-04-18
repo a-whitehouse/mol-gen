@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
 
 from attr import frozen
 from rdkit.Chem import GetPeriodicTable, Mol
@@ -41,6 +41,20 @@ class FilterConfig:
             },
         )
 
+    def apply(self, mol: Mol) -> None:
+        """Applies elements and range filter methods to molecule.
+
+        Args:
+            mol (Mol): Molecule to check.
+
+        Raises:
+            UndesirableMolecule: If molecule fails a filter.
+        """
+        self.elements_filter.apply(mol)
+
+        for filter in self.range_filters.values():
+            filter.apply(mol)
+
 
 @frozen
 class ElementsFilter:
@@ -72,19 +86,18 @@ class ElementsFilter:
 
         return cls(valid_elements)
 
-    def get_method(self) -> Callable[[Mol], None]:
-        """Gets filter method that only takes molecule, with other arguments preset.
+    def apply(self, mol: Mol) -> None:
+        """Applies filter method to molecule.
 
-        Returns:
-            Callable[[Mol], None]: Filter method.
+        Checks whether atoms of the molecule only correspond to allowed elements.
+
+        Args:
+            mol (Mol): Molecule to check.
+
+        Raises:
+            UndesirableMolecule: If atoms correspond to other elements.
         """
-
-        def preset_check_only_allowed_elements_present(mol: Mol):
-            return check_only_allowed_elements_present(
-                mol, allowed_elements=self.allowed_elements
-            )
-
-        return preset_check_only_allowed_elements_present
+        check_only_allowed_elements_present(mol, allowed_elements=self.allowed_elements)
 
 
 @frozen
@@ -128,16 +141,15 @@ class RangeFilter:
             max=max,
         )
 
-    def get_method(self) -> Callable[[Mol], None]:
-        """Gets filter method that only takes molecule, with other arguments preset.
+    def apply(self, mol: Mol) -> None:
+        """Applies filter method to molecule.
 
-        Returns:
-            Callable[[Mol], None]: Filter method.
+        Calculates descriptor of molecule and compares to allowed min and max values.
+
+        Args:
+            mol (Mol): Molecule to check.
+
+        Raises:
+            UndesirableMolecule: If descriptor is outside the allowed range of values.
         """
-
-        def preset_check_descriptor_within_range(mol: Mol):
-            return check_descriptor_within_range(
-                mol, self.descriptor, min=self.min, max=self.max
-            )
-
-        return preset_check_descriptor_within_range
+        check_descriptor_within_range(mol, self.descriptor, min=self.min, max=self.max)
