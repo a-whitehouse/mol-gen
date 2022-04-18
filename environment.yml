@@ -12,6 +12,7 @@ dependencies:
   - pytest
   - pytest-mock
 
+  - attrs
   - dask
   - jupyterlab
   - matplotlib
@@ -19,5 +20,10 @@ dependencies:
   - pandas
   - python=3.9
   - rdkit
+  - selfies
   - tensorflow
   - tqdm
+
+  - pip~=22.0
+  - pip:
+    - -e .
