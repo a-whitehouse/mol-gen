@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, Union
 
-from attr import frozen
+from attrs import field, frozen
 from rdkit.Chem import GetPeriodicTable, Mol
 
 from mol_gen.exceptions import ConfigException
@@ -58,7 +58,18 @@ class FilterConfig:
 
 @frozen
 class ElementsFilter:
-    allowed_elements: list[str]
+    allowed_elements: list[str] = field()
+
+    @allowed_elements.validator
+    def _check_allowed_elements(self, attribute, value):
+        periodic_table = GetPeriodicTable()
+
+        for element in value:
+            try:
+                periodic_table.GetAtomicNumber(element)
+
+            except RuntimeError:
+                raise ConfigException(f"Element {element} is not recognised.")
 
     @classmethod
     def parse_config(cls, config: list[str]) -> ElementsFilter:
@@ -73,18 +84,7 @@ class ElementsFilter:
         Returns:
             ElementsFilter: Class representing section of config.
         """
-        periodic_table = GetPeriodicTable()
-        valid_elements = []
-
-        for element in config:
-            try:
-                periodic_table.GetAtomicNumber(element)
-                valid_elements.append(element)
-
-            except RuntimeError:
-                raise ConfigException(f"Element {element} is not recognised.")
-
-        return cls(valid_elements)
+        return cls(config)
 
     def apply(self, mol: Mol) -> None:
         """Applies filter method to molecule.
@@ -102,9 +102,28 @@ class ElementsFilter:
 
 @frozen
 class RangeFilter:
-    descriptor: str
-    min: Optional[Union[int, float]] = None
-    max: Optional[Union[int, float]] = None
+    descriptor: str = field()
+    min: Optional[Union[int, float]] = field(default=None)
+    max: Optional[Union[int, float]] = field(default=None)
+
+    @descriptor.validator
+    def _check_descriptor(self, attribute, value):
+        if value not in DESCRIPTOR_TO_FUNCTION:
+            raise ConfigException(f"Descriptor {value} is not recognised.")
+
+    @min.validator
+    def _check_min(self, attribute, value):
+        if (value is not None) and not isinstance(value, (float, int)):
+            raise ConfigException(
+                f"Minimum value {value} for {self.descriptor} is not a number."
+            )
+
+    @max.validator
+    def _check_max(self, attribute, value):
+        if (value is not None) and not isinstance(value, (float, int)):
+            raise ConfigException(
+                f"Maximum value {value} for {self.descriptor} is not a number."
+            )
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> RangeFilter:
@@ -120,25 +139,11 @@ class RangeFilter:
             RangeFilter: Class representing section of config.
         """
         descriptor = list(config.keys())[0]
-        if descriptor not in DESCRIPTOR_TO_FUNCTION:
-            raise ConfigException(f"Descriptor {descriptor} is not recognised.")
-
-        min = config[descriptor].get("min")
-        if min and not isinstance(min, (float, int)):
-            raise ConfigException(
-                f"Minimum value {min} for {descriptor} is not a number."
-            )
-
-        max = config[descriptor].get("max")
-        if max and not isinstance(max, (float, int)):
-            raise ConfigException(
-                f"Maximum value {max} for {descriptor} is not a number."
-            )
 
         return cls(
             descriptor,
-            min=min,
-            max=max,
+            min=config[descriptor].get("min"),
+            max=config[descriptor].get("max"),
         )
 
     def apply(self, mol: Mol) -> None:
