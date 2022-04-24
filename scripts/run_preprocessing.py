@@ -1,11 +1,18 @@
 import argparse
+import logging
 from pathlib import Path
+from shutil import rmtree
 
 import dask.dataframe as dd
-import yaml
+from dask.distributed import Client
 
-from mol_gen.config.preprocessing import PreprocessingConfig
-from mol_gen.preprocessing.preprocessor import MoleculePreprocessor
+from mol_gen.preprocessing.preprocessor import process_dataframe
+
+logger = logging.getLogger("preprocessing")
+logger.setLevel = logging.INFO
+handler = logging.FileHandler(filename="example.log")
+logger.addHandler(handler)
+
 
 parser = argparse.ArgumentParser(
     description="Apply preprocessing steps to SMILES strings."
@@ -22,23 +29,33 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-with open(args.config) as f:
-    config_dict = yaml.safe_load(f)
 
-config = PreprocessingConfig.parse_config(config_dict)
-preprocessor = MoleculePreprocessor(config)
+def main():
 
-input_filepaths = Path(args.input).glob("*.csv")
+    print("Setting up dask client")
 
-for fp in input_filepaths:
-    print(f"Preprocessing {fp}")
-    all_smiles = dd.read_csv(fp)
+    with Client():
+        df = dd.read_parquet(args.input)
 
-    all_smiles["SMILES"] = all_smiles["SMILES"].apply(
-        preprocessor.process_molecule, meta=("SMILES", "object")
-    )
-    all_smiles = all_smiles.dropna(subset="SMILES")
+        # Persist preprocessed results in intermediate directory
+        intermediate_dir = Path(args.output).joinpath("intermediate")
 
-    output_filepath = Path(args.output).joinpath(fp.name)
-    all_smiles["SMILES"].to_csv(output_filepath, single_file=True)
-    out = all_smiles.compute()
+        print("Executing preprocessing steps on input molecules")
+        df.repartition(partition_size="25MB").map_partitions(
+            process_dataframe, args.config, meta=df
+        ).to_parquet(intermediate_dir)
+
+    # Drop duplicates and repartition intermediate results
+    # Persist results in output directory and wipe intermediate directory
+    print("Removing duplicate molecules and repartitioning files")
+    df = dd.read_parquet(intermediate_dir)
+
+    df.drop_duplicates(subset="SMILES", split_out=df.npartitions).repartition(
+        partition_size="100MB"
+    ).to_parquet(args.output)
+
+    rmtree(intermediate_dir)
+
+
+if __name__ == "__main__":
+    main()

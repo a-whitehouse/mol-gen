@@ -21,6 +21,7 @@ dependencies:
   # Libraries
   - attrs
   - dask
+  - fastparquet
   - jupyterlab
   - matplotlib
   - numpy
