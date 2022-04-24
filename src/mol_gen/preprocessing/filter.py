@@ -40,6 +40,7 @@ def check_descriptor_within_range(
     """Calculates descriptor of molecule and compares to allowed min and max values.
 
     Implemented descriptor names are defined in DESCRIPTOR_TO_FUNCTION.
+
     Args:
         descriptor (str): Name of descriptor to calculate.
         mol (Mol): Molecule to calculate descriptor with.
