@@ -7,10 +7,10 @@ UNCHARGER = Uncharger()
 
 
 def neutralise_salts(mol: Mol) -> Mol:
-    """Removes salts and neutralises charges of remaining molecule.
+    """Removes counterions and neutralises charges of molecule.
 
     Args:
-        mol (Mol): Molecule to neutralise.
+        mol (Mol): Molecule to convert.
 
     Returns:
         Mol: Neutralised molecule.
@@ -24,11 +24,26 @@ def neutralise_salts(mol: Mol) -> Mol:
     return mol
 
 
-def remove_stereochemistry(mol: Mol) -> Mol:
-    """Removes chiral tags of molecule.
+def remove_isotopes(mol: Mol) -> Mol:
+    """Removes isotopic labels from molecule.
 
     Args:
-        mol (Mol): Molecule to remove chiral tags.
+        mol (Mol): Molecule to convert.
+
+    Returns:
+        Mol: Label free molecule.
+    """
+    for atom in mol.GetAtoms():
+        atom.SetIsotope(0)
+
+    return mol
+
+
+def remove_stereochemistry(mol: Mol) -> Mol:
+    """Removes chiral tags from molecule.
+
+    Args:
+        mol (Mol): Molecule to convert.
 
     Returns:
         Mol: Achiral molecule.
