@@ -1,8 +1,10 @@
 import pytest
+import yaml
 
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.config.preprocessing.convert import ConvertConfig
 from mol_gen.config.preprocessing.filter import FilterConfig
+from mol_gen.exceptions import ConfigException
 
 
 class TestPreprocessingConfig:
@@ -68,3 +70,44 @@ class TestPreprocessingConfig:
                 },
             }
         )
+
+    @pytest.fixture
+    def valid_config_file(self, tmpdir, valid_config_section):
+        fp = tmpdir.join("preprocessing.yml")
+
+        with open(fp, "w") as fh:
+            yaml.dump(valid_config_section, fh)
+
+        return fp
+
+    def test_from_file_completes_given_valid_file(
+        self,
+        valid_config_file,
+    ):
+        PreprocessingConfig.from_file(valid_config_file)
+
+    def test_from_file_returns_expected_config_given_valid_file(
+        self,
+        valid_config_file,
+    ):
+        config = PreprocessingConfig.from_file(valid_config_file)
+
+        assert isinstance(config, PreprocessingConfig)
+
+    def test_from_file_raises_exception_given_file_not_found(self, tmpdir):
+        fp = tmpdir.join("preprocessing.yml")
+
+        with pytest.raises(ConfigException) as excinfo:
+            PreprocessingConfig.from_file(fp)
+
+        assert "does not exist" in str(excinfo.value)
+
+    def test_from_file_raises_exception_given_file_not_valid_yaml(self, tmpdir):
+        fp = tmpdir.join("preprocessing.yml")
+        with open(fp, "w") as fh:
+            fh.write("convert: [")
+
+        with pytest.raises(ConfigException) as excinfo:
+            PreprocessingConfig.from_file(fp)
+
+        assert "does not contain valid yaml" in str(excinfo.value)
