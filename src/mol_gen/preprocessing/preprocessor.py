@@ -6,7 +6,7 @@ from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.exceptions import PreprocessingException
 
 
-def process_dataframe(df: pd.DataFrame, config_path: str) -> pd.Series:
+def preprocess_smiles_dataframe(df: pd.DataFrame, config_path: str) -> pd.DataFrame:
     """Apply preprocessing methods and filters to molecules in dataframe.
 
     Molecules must be present as SMILES strings in column "SMILES".
@@ -14,6 +14,9 @@ def process_dataframe(df: pd.DataFrame, config_path: str) -> pd.Series:
     Args:
         df (pd.DataFrame): Dataframe containing SMILES strings in column "SMILES".
         config_path (Path): Path to config.
+
+    Returns:
+        pd.DataFrame: Dataframe with preprocessed SMILES strings in column "SMILES".
     """
     config = PreprocessingConfig.from_file(config_path)
     preprocessor = MoleculePreprocessor(config)
