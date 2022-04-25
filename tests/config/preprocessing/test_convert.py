@@ -3,7 +3,11 @@ from rdkit.Chem import MolFromSmiles, MolToSmiles
 
 from mol_gen.config.preprocessing.convert import CONVERT_METHODS, ConvertConfig
 from mol_gen.exceptions import ConfigException
-from mol_gen.preprocessing.convert import neutralise_salts, remove_stereochemistry
+from mol_gen.preprocessing.convert import (
+    neutralise_salts,
+    remove_isotopes,
+    remove_stereochemistry,
+)
 
 
 @pytest.fixture
@@ -14,7 +18,7 @@ def mol():
 class TestConvertConfig:
     @pytest.fixture
     def valid_config_section(self):
-        return ["neutralise_salts", "remove_stereochemistry"]
+        return ["neutralise_salts", "remove_isotopes", "remove_stereochemistry"]
 
     def test_parse_config_completes_given_valid_config_section(
         self, valid_config_section
@@ -33,7 +37,11 @@ class TestConvertConfig:
     ):
         config = ConvertConfig.parse_config(valid_config_section)
 
-        assert config.methods == [neutralise_salts, remove_stereochemistry]
+        assert config.methods == [
+            neutralise_salts,
+            remove_isotopes,
+            remove_stereochemistry,
+        ]
 
     def test_parse_config_returns_expected_config_given_no_methods_requested(self):
         config = ConvertConfig.parse_config([])
@@ -60,6 +68,7 @@ class TestConvertConfig:
             CONVERT_METHODS,
             {
                 "neutralise_salts": lambda x: MolToSmiles(x) + "_neutral",
+                "remove_isotopes": lambda x: x + "_isotope_free",
                 "remove_stereochemistry": lambda x: x + "_achiral",
             },
         )
@@ -67,4 +76,4 @@ class TestConvertConfig:
 
         converted_mol = config.apply(mol)
 
-        assert converted_mol == "CCC_neutral_achiral"
+        assert converted_mol == "CCC_neutral_isotope_free_achiral"

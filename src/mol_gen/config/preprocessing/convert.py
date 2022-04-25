@@ -6,10 +6,15 @@ from attrs import frozen
 from rdkit.Chem import Mol
 
 from mol_gen.exceptions import ConfigException, ConvertException
-from mol_gen.preprocessing.convert import neutralise_salts, remove_stereochemistry
+from mol_gen.preprocessing.convert import (
+    neutralise_salts,
+    remove_isotopes,
+    remove_stereochemistry,
+)
 
 CONVERT_METHODS = {
     "neutralise_salts": neutralise_salts,
+    "remove_isotopes": remove_isotopes,
     "remove_stereochemistry": remove_stereochemistry,
 }
 

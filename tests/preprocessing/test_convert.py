@@ -1,7 +1,11 @@
 import pytest
 from rdkit.Chem import Mol, MolFromSmiles
 
-from mol_gen.preprocessing.convert import neutralise_salts, remove_stereochemistry
+from mol_gen.preprocessing.convert import (
+    neutralise_salts,
+    remove_isotopes,
+    remove_stereochemistry,
+)
 from mol_gen.utils import check_smiles_equivalent_to_molecule
 
 
@@ -37,6 +41,36 @@ class TestNeutraliseSalts:
     )
     def test_converts_molecule_as_expected(self, mol, expected):
         actual = neutralise_salts(mol)
+
+        check_smiles_equivalent_to_molecule(actual, expected)
+
+
+class TestRemoveIsotopes:
+    @pytest.mark.parametrize(
+        "smiles",
+        ["CC(C)C(C(=O)O)[15N]"],
+    )
+    def test_completes(self, mol):
+        remove_isotopes(mol)
+
+    @pytest.mark.parametrize(
+        "smiles",
+        ["CC(C)C(C(=O)O)N"],
+    )
+    def test_leaves_label_free_molecule_unchanged(self, smiles, mol):
+        actual = remove_isotopes(mol)
+
+        check_smiles_equivalent_to_molecule(actual, smiles)
+
+    @pytest.mark.parametrize(
+        "smiles, expected",
+        [
+            ("CC(C)C(C(=O)O)[15N]", "CC(C)C(C(=O)O)[N]"),
+            ("[2H]CC(C)C(C(=O)O)N", "[H]CC(C)C(C(=O)O)N"),
+        ],
+    )
+    def test_converts_molecule_as_expected(self, mol, expected):
+        actual = remove_isotopes(mol)
 
         check_smiles_equivalent_to_molecule(actual, expected)
 

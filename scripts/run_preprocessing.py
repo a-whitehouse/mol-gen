@@ -1,44 +1,67 @@
 import argparse
 from pathlib import Path
+from shutil import rmtree
+from time import sleep
 
 import dask.dataframe as dd
-import yaml
+from dask.distributed import Client
 
-from mol_gen.config.preprocessing import PreprocessingConfig
-from mol_gen.preprocessing.preprocessor import MoleculePreprocessor
+from mol_gen.preprocessing.preprocessor import process_dataframe
 
-parser = argparse.ArgumentParser(
-    description="Apply preprocessing steps to SMILES strings."
-)
-parser.add_argument(
-    "--config", type=str, help="Path to preprocessing yaml config file."
-)
-parser.add_argument(
-    "--input", type=str, help="Path to directory containing SMILES strings."
-)
-parser.add_argument(
-    "--output", type=str, help="Path to directory to write preprocessed SMILES strings."
-)
 
-args = parser.parse_args()
-
-with open(args.config) as f:
-    config_dict = yaml.safe_load(f)
-
-config = PreprocessingConfig.parse_config(config_dict)
-preprocessor = MoleculePreprocessor(config)
-
-input_filepaths = Path(args.input).glob("*.csv")
-
-for fp in input_filepaths:
-    print(f"Preprocessing {fp}")
-    all_smiles = dd.read_csv(fp)
-
-    all_smiles["SMILES"] = all_smiles["SMILES"].apply(
-        preprocessor.process_molecule, meta=("SMILES", "object")
+def parse_args() -> argparse.Namespace:
+    """Parses command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Apply preprocessing steps to SMILES strings."
     )
-    all_smiles = all_smiles.dropna(subset="SMILES")
+    parser.add_argument(
+        "--config", type=str, help="Path to preprocessing yaml config file."
+    )
+    parser.add_argument(
+        "--input", type=str, help="Path to directory containing SMILES strings."
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        help="Path to directory to write preprocessed SMILES strings.",
+    )
 
-    output_filepath = Path(args.output).joinpath(fp.name)
-    all_smiles["SMILES"].to_csv(output_filepath, single_file=True)
-    out = all_smiles.compute()
+    args = parser.parse_args()
+
+    return args
+
+
+def main():
+    args = parse_args()
+
+    print("Setting up dask client")
+
+    with Client() as client:
+        print(client.dashboard_link)
+
+        df = dd.read_parquet(args.input)
+
+        # Persist preprocessed results in intermediate directory
+        intermediate_dir = Path(args.output).joinpath("intermediate")
+
+        print("Executing preprocessing steps on input molecules")
+        df.repartition(partition_size="25MB").map_partitions(
+            process_dataframe, args.config, meta=df
+        ).to_parquet(intermediate_dir)
+
+    # Drop duplicates and repartition intermediate results
+    # Persist results in output directory and wipe intermediate directory
+    print("Removing duplicate molecules and repartitioning files")
+    df = dd.read_parquet(intermediate_dir)
+
+    df.drop_duplicates(subset="SMILES", split_out=df.npartitions).repartition(
+        partition_size="100MB"
+    ).to_parquet(args.output)
+
+    print("Removing intermediate files")
+    sleep(10)
+    rmtree(intermediate_dir)
+
+
+if __name__ == "__main__":
+    main()

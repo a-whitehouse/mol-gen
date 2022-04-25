@@ -23,7 +23,7 @@ class FilterConfig:
         """Parse filter section of preprocessing config.
 
         Args:
-            config (list[str]): Section of config.
+            config (dict[str, Any]): Section of config.
 
         Raises:
             ConfigException: If a section is invalid.

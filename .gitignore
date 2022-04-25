@@ -1,5 +1,9 @@
 # Project stuff
 *.csv
+*.parquet
+*.gz
+dask-worker-space/
+*_metadata
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
