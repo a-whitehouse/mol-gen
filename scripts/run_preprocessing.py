@@ -1,13 +1,12 @@
 import argparse
 from pathlib import Path
 from shutil import rmtree
-from typing import Union
 
-import dask.dataframe as dd
-from dask.distributed import Client
-
-from mol_gen.preprocessing.convert import encode_smiles_as_selfies
-from mol_gen.preprocessing.preprocessor import preprocess_smiles_dataframe
+from mol_gen.preprocessing.dask import (
+    convert_and_filter_smiles_strings,
+    create_selfies_from_smiles,
+    drop_duplicates_and_repartition,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -30,43 +29,6 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
 
     return args
-
-
-def convert_and_filter_smiles_strings(
-    input_path: Union[str, Path],
-    output_path: Union[str, Path],
-    config_path: Union[str, Path],
-) -> None:
-    print("Setting up dask client")
-    with Client() as client:
-        print(client.dashboard_link)
-        print("Executing preprocessing steps on input molecules")
-
-        df = dd.read_parquet(input_path)
-        df.repartition(partition_size="25MB").map_partitions(
-            preprocess_smiles_dataframe, config_path, meta=df
-        ).to_parquet(output_path)
-
-
-def drop_duplicates_and_repartition(input_path: str, output_path: str) -> None:
-    print("Removing duplicate molecules and repartitioning files")
-    df = dd.read_parquet(input_path)
-
-    df.drop_duplicates(subset="SMILES", split_out=df.npartitions).repartition(
-        partition_size="100MB"
-    ).to_parquet(output_path)
-
-
-def create_selfies_from_smiles(input_path: str, output_path: str):
-    print("Setting up dask client")
-    with Client() as client:
-        print(client.dashboard_link)
-        print("Creating SELFIES from SMILES strings")
-
-        df = dd.read_parquet(input_path)
-
-        df["SELFIES"] = df["SMILES"].apply(encode_smiles_as_selfies, meta=(None, str))
-        df[["SELFIES"]].dropna().to_parquet(output_path)
 
 
 def main():
