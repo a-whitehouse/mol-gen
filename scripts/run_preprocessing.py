@@ -1,12 +1,12 @@
 import argparse
 from pathlib import Path
 from shutil import rmtree
-from time import sleep
 
-import dask.dataframe as dd
-from dask.distributed import Client
-
-from mol_gen.preprocessing.preprocessor import process_dataframe
+from mol_gen.preprocessing.dask import (
+    apply_molecule_preprocessor_to_parquet,
+    create_selfies_from_smiles,
+    drop_duplicates_and_repartition_parquet,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,6 +25,12 @@ def parse_args() -> argparse.Namespace:
         type=str,
         help="Path to directory to write preprocessed SMILES strings.",
     )
+    parser.add_argument(
+        "--column",
+        type=str,
+        help="Name of column containing SMILES strings.",
+        default="SMILES",
+    )
 
     args = parser.parse_args()
 
@@ -34,33 +40,30 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
-    print("Setting up dask client")
+    output_dir = Path(args.output)
+    intermediate_dir = output_dir / "intermediate"
+    preprocessed_smiles_dir = output_dir / "smiles"
+    selfies_dir = output_dir / "selfies"
 
-    with Client() as client:
-        print(client.dashboard_link)
+    if not preprocessed_smiles_dir.exists():
+        print("Starting preprocessing of SMILES strings")
+        apply_molecule_preprocessor_to_parquet(
+            args.input, intermediate_dir, args.config, args.column
+        )
+        drop_duplicates_and_repartition_parquet(
+            intermediate_dir, preprocessed_smiles_dir, column="SMILES"
+        )
+        rmtree(intermediate_dir)
 
-        df = dd.read_parquet(args.input)
+    else:
+        print("Skipping preprocessing of SMILES strings")
+        print("SMILES directory already exists in output directory")
 
-        # Persist preprocessed results in intermediate directory
-        intermediate_dir = Path(args.output).joinpath("intermediate")
-
-        print("Executing preprocessing steps on input molecules")
-        df.repartition(partition_size="25MB").map_partitions(
-            process_dataframe, args.config, meta=df
-        ).to_parquet(intermediate_dir)
-
-    # Drop duplicates and repartition intermediate results
-    # Persist results in output directory and wipe intermediate directory
-    print("Removing duplicate molecules and repartitioning files")
-    df = dd.read_parquet(intermediate_dir)
-
-    df.drop_duplicates(subset="SMILES", split_out=df.npartitions).repartition(
-        partition_size="100MB"
-    ).to_parquet(args.output)
-
-    print("Removing intermediate files")
-    sleep(10)
-    rmtree(intermediate_dir)
+    if not selfies_dir.exists():
+        print("Starting encoding of SMILES strings as SELFIES")
+        create_selfies_from_smiles(
+            preprocessed_smiles_dir, selfies_dir, column="SMILES"
+        )
 
 
 if __name__ == "__main__":

@@ -1,32 +1,27 @@
 import pandas as pd
-from attrs import frozen
+from attrs import define
 from rdkit.Chem import Mol, MolFromSmiles, MolToSmiles
 
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.exceptions import PreprocessingException
 
 
-def process_dataframe(df: pd.DataFrame, config_path: str) -> pd.Series:
-    """Apply preprocessing methods and filters to molecules in dataframe.
-
-    Molecules must be present as SMILES strings in column "SMILES".
-
-    Args:
-        df (pd.DataFrame): Dataframe containing SMILES strings in column "SMILES".
-        config_path (Path): Path to config.
-    """
-    config = PreprocessingConfig.from_file(config_path)
-    preprocessor = MoleculePreprocessor(config)
-
-    df["SMILES"] = df["SMILES"].apply(preprocessor.process_molecule)
-    df.dropna(subset=["SMILES"], inplace=True)
-
-    return df
-
-
-@frozen
+@define
 class MoleculePreprocessor:
     config: PreprocessingConfig
+
+    def process_molecules(self, smiles: pd.Series) -> pd.Series:
+        """Apply conversion and filter methods to molecules in series.
+
+        Molecules must be present as SMILES strings.
+
+        Args:
+            smiles (pd.Series): SMILES string of molecules to preprocess.
+
+        Returns:
+            pd.Series: SMILES string of preprocessed molecules.
+        """
+        return smiles.apply(self.process_molecule).dropna()
 
     def process_molecule(self, smiles: str) -> str:
         """Apply conversion and filter methods to molecule.
