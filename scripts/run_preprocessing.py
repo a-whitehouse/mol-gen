@@ -3,9 +3,9 @@ from pathlib import Path
 from shutil import rmtree
 
 from mol_gen.preprocessing.dask import (
-    convert_and_filter_smiles_strings,
+    apply_molecule_preprocessor_to_parquet,
     create_selfies_from_smiles,
-    drop_duplicates_and_repartition,
+    drop_duplicates_and_repartition_parquet,
 )
 
 
@@ -25,6 +25,12 @@ def parse_args() -> argparse.Namespace:
         type=str,
         help="Path to directory to write preprocessed SMILES strings.",
     )
+    parser.add_argument(
+        "--column",
+        type=str,
+        help="Name of column containing SMILES strings.",
+        default="SMILES",
+    )
 
     args = parser.parse_args()
 
@@ -41,8 +47,12 @@ def main():
 
     if not preprocessed_smiles_dir.exists():
         print("Starting preprocessing of SMILES strings")
-        convert_and_filter_smiles_strings(args.input, intermediate_dir, args.config)
-        drop_duplicates_and_repartition(intermediate_dir, preprocessed_smiles_dir)
+        apply_molecule_preprocessor_to_parquet(
+            args.input, intermediate_dir, args.config, args.column
+        )
+        drop_duplicates_and_repartition_parquet(
+            intermediate_dir, preprocessed_smiles_dir, column="SMILES"
+        )
         rmtree(intermediate_dir)
 
     else:
@@ -51,7 +61,9 @@ def main():
 
     if not selfies_dir.exists():
         print("Starting encoding of SMILES strings as SELFIES")
-        create_selfies_from_smiles(preprocessed_smiles_dir, selfies_dir)
+        create_selfies_from_smiles(
+            preprocessed_smiles_dir, selfies_dir, column="SMILES"
+        )
 
 
 if __name__ == "__main__":
