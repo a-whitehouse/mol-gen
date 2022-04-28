@@ -1,9 +1,10 @@
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
-from rdkit.Chem import MolFromSmiles
+from rdkit.Chem import MolFromSmiles, MolToSmiles
 
 from mol_gen.config.preprocessing import PreprocessingConfig
+from mol_gen.config.preprocessing.convert import CONVERT_METHODS
 from mol_gen.exceptions import UndesirableMolecule
 from mol_gen.preprocessing.preprocessor import MoleculePreprocessor
 
@@ -28,24 +29,26 @@ class TestMoleculePreprocessor:
         )
 
     @pytest.fixture
-    def config(self):
-        return PreprocessingConfig.parse_config(
-            {
-                "convert": ["neutralise_salts", "remove_stereochemistry"],
-                "filter": {
-                    "allowed_elements": ["H", "C", "N", "O", "F", "S", "Cl", "Br"],
-                    "range_filters": {
-                        "molecular_weight": {"min": 180, "max": 480},
-                    },
+    def valid_config_section(self):
+        return {
+            "convert": ["neutralise_salts", "remove_stereochemistry"],
+            "filter": {
+                "allowed_elements": ["H", "C", "N", "O", "F", "S", "Cl", "Br"],
+                "range_filters": {
+                    "molecular_weight": {"min": 180, "max": 480},
                 },
-            }
-        )
+            },
+        }
+
+    @pytest.fixture
+    def config(self, valid_config_section):
+        return PreprocessingConfig.parse_config(valid_config_section)
 
     @pytest.fixture
     def preprocessor(self, config):
         return MoleculePreprocessor(config)
 
-    def test_process_molecules_completes(self, preprocessor, smiles):
+    def test_process_molecules_completes_given_valid_smiles(self, preprocessor, smiles):
         preprocessor.process_molecules(smiles)
 
     def test_process_molecules_returns_series(self, preprocessor, smiles):
@@ -94,8 +97,8 @@ class TestMoleculePreprocessor:
         mock_process_mol.assert_any_call("CCOC(=O)C(C)(C)C1=CC(=C(C=C1)I)C")
         mock_process_mol.assert_any_call("CCOC(=O)C1=CC(=O)NC2=C1C=CC(=C2)F")
 
-    def test_process_molecule_completes(self, preprocessor):
-        preprocessor.process_molecule("CCOC(=O)C1=CC(=O)NC2=C1C=CC(=C2)F")
+    def test_process_molecule_completes_given_valid_smiles(self, preprocessor):
+        preprocessor.process_molecule("CCC")
 
     def test_process_molecule_passes_converted_molecule_to_filter(
         self, mocker, preprocessor
@@ -107,7 +110,7 @@ class TestMoleculePreprocessor:
             preprocessor, "_apply_filters", side_effect=UndesirableMolecule
         )
 
-        preprocessor.process_molecule("CCOC(=O)C1=CC(=O)NC2=C1C=CC(=C2)F")
+        preprocessor.process_molecule("CCC")
 
         mock_filter.assert_called_once_with("converted_molecule")
 
@@ -117,11 +120,11 @@ class TestMoleculePreprocessor:
         mocker.patch.object(
             preprocessor,
             "_apply_conversions",
-            return_value=MolFromSmiles("CCO"),
+            return_value=MolFromSmiles("CCC"),
         )
         mocker.patch.object(preprocessor, "_apply_filters", return_value=None)
 
-        actual = preprocessor.process_molecule("CCOC(=O)C1=CC(=O)NC2=C1C=CC(=C2)F")
+        actual = preprocessor.process_molecule("CCC")
 
         assert actual is not None
 
@@ -131,13 +134,13 @@ class TestMoleculePreprocessor:
         mocker.patch.object(
             preprocessor,
             "_apply_conversions",
-            return_value=MolFromSmiles("CCO"),
+            return_value=MolFromSmiles("CCC"),
         )
         mocker.patch.object(preprocessor, "_apply_filters", return_value=None)
 
-        actual = preprocessor.process_molecule("CCOC(=O)C1=CC(=O)NC2=C1C=CC(=C2)F")
+        actual = preprocessor.process_molecule("CCC")
 
-        assert actual == "CCO"
+        assert actual == "CCC"
 
     def test_process_molecule_returns_none_if_molecule_fails_filter(
         self, mocker, preprocessor
@@ -145,11 +148,35 @@ class TestMoleculePreprocessor:
         mocker.patch.object(
             preprocessor,
             "_apply_conversions",
-            return_value=MolFromSmiles("CCO"),
+            return_value=MolFromSmiles("CCC"),
         )
         mocker.patch.object(
             preprocessor, "_apply_filters", side_effect=UndesirableMolecule
         )
-        actual = preprocessor.process_molecule("CCOC(=O)C1=CC(=O)NC2=C1C=CC(=C2)F")
+        actual = preprocessor.process_molecule("CCC")
 
         assert actual is None
+
+    def test__apply_conversions_completes_given_valid_molecule(self, preprocessor):
+        mol = MolFromSmiles("CCC")
+        preprocessor._apply_conversions(mol)
+
+    def test__apply_conversions_makes_expected_changes_to_molecule(
+        self,
+        mocker,
+        valid_config_section,
+    ):
+        mocker.patch.dict(
+            CONVERT_METHODS,
+            {
+                "neutralise_salts": lambda x: MolToSmiles(x) + "_neutral",
+                "remove_stereochemistry": lambda x: x + "_achiral",
+            },
+        )
+        config = PreprocessingConfig.parse_config(valid_config_section)
+        preprocessor = MoleculePreprocessor(config)
+        mol = MolFromSmiles("CCC")
+
+        converted_mol = preprocessor._apply_conversions(mol)
+
+        assert converted_mol == "CCC_neutral_achiral"

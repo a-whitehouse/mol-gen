@@ -10,7 +10,7 @@ class TestEncodeSmilesAsSelfies:
     def test_returns_expected_selfies_given_valid_smiles(self):
         actual = encode_smiles_as_selfies("CCOC(=O)C(C)(C)C1=CC(=C(C=C1)I)C")
 
-        assert re.match(r"^(\[.*?\])*$", actual)
+        assert re.match(r"^(\[.+?\])*$", actual)
 
     def test_completes_given_invalid_smiles(self):
         encode_smiles_as_selfies("invalid smiles")
