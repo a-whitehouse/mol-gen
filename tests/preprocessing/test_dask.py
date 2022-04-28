@@ -1,8 +1,12 @@
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
+import yaml
+from pandas.testing import assert_frame_equal, assert_index_equal
 
-from mol_gen.preprocessing.dask import drop_duplicates_and_repartition_parquet
+from mol_gen.preprocessing.dask import (
+    apply_molecule_preprocessor_to_partition,
+    drop_duplicates_and_repartition_parquet,
+)
 
 
 @pytest.fixture
@@ -23,6 +27,63 @@ def smiles():
         columns=["SMILES"],
         index=[0, 3, 4, 5, 6, 7, 8, 10, 11, 12],
     )
+
+
+class TestApplyMoleculePreprocessorToPartition:
+    @pytest.fixture
+    def valid_config_section(self):
+        return {
+            "convert": ["neutralise_salts", "remove_stereochemistry"],
+            "filter": {
+                "allowed_elements": ["H", "C", "N", "O", "F", "S", "Cl", "Br"],
+                "range_filters": {
+                    "molecular_weight": {"min": 180, "max": 480},
+                },
+            },
+        }
+
+    @pytest.fixture
+    def config_path(self, tmpdir, valid_config_section):
+        config_path = tmpdir.join("preprocessing.yml")
+
+        with open(config_path, "w") as f:
+            yaml.dump(valid_config_section, f)
+
+        return config_path
+
+    def test_completes_given_valid_smiles(self, smiles, config_path):
+        apply_molecule_preprocessor_to_partition(smiles, config_path, "SMILES")
+
+    def test_returns_dataframe_with_smiles_column(self, smiles, config_path):
+        actual = apply_molecule_preprocessor_to_partition(smiles, config_path, "SMILES")
+
+        assert isinstance(actual, pd.DataFrame)
+        assert_index_equal(actual.columns, pd.Index(["SMILES"]))
+
+    def test_returns_dataframe_with_no_missing_values(self, smiles, config_path):
+        smiles[0] = "invalid smiles"
+
+        actual = apply_molecule_preprocessor_to_partition(smiles, config_path, "SMILES")
+
+        assert all(actual.notna())
+
+    def test_removes_invalid_smiles_strings(self, smiles, config_path):
+        smiles[0] = "invalid smiles"
+
+        actual = apply_molecule_preprocessor_to_partition(smiles, config_path, "SMILES")
+
+        assert not any(actual.str.contains("invalid smiles"))
+
+    def test_raises_exception_given_incorrect_column_name(self, smiles, config_path):
+        with pytest.raises(KeyError):
+            apply_molecule_preprocessor_to_partition(smiles, config_path, "smiles")
+
+    def test_renames_column_to_smiles(self, smiles, config_path):
+        smiles = smiles.rename(columns={"SMILES": "smiles"})
+
+        actual = apply_molecule_preprocessor_to_partition(smiles, config_path, "smiles")
+
+        assert_index_equal(actual.columns, pd.Index(["SMILES"]))
 
 
 class TestDropDuplicatesAndRepartitionParquet:
