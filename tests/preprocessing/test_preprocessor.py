@@ -3,7 +3,7 @@ import pytest
 from pandas.testing import assert_series_equal
 from rdkit.Chem import MolFromSmiles, MolToSmiles
 
-from mol_gen.config.preprocessing import PreprocessingConfig
+from mol_gen.config.preprocessing import PreprocessingConfig, filter
 from mol_gen.config.preprocessing.convert import CONVERT_METHODS
 from mol_gen.exceptions import UndesirableMolecule
 from mol_gen.preprocessing.preprocessor import MoleculePreprocessor
@@ -180,3 +180,25 @@ class TestMoleculePreprocessor:
         converted_mol = preprocessor._apply_conversions(mol)
 
         assert converted_mol == "CCC_neutral_achiral"
+
+    def test__apply_filters_makes_expected_calls_to_filter_functions(
+        self, mocker, preprocessor
+    ):
+        spy_allowed_elements = mocker.spy(
+            filter,
+            "check_only_allowed_elements_present",
+        )
+        spy_molecular_weight = mocker.spy(
+            filter,
+            "check_descriptor_within_range",
+        )
+
+        mol = MolFromSmiles("CCC")
+
+        with pytest.raises(UndesirableMolecule):
+            preprocessor._apply_filters(mol)
+
+        spy_allowed_elements.assert_called_once_with(
+            mol, allowed_elements=["H", "C", "N", "O", "F", "S", "Cl", "Br"]
+        )
+        spy_molecular_weight.assert_called_once_with(mol, "molecular_weight", 180, 480)
