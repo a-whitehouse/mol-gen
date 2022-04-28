@@ -1,12 +1,12 @@
+import attr
 import pandas as pd
-from attrs import define
 from rdkit.Chem import Mol, MolFromSmiles, MolToSmiles
 
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.exceptions import PreprocessingException
 
 
-@define
+@attr.s(auto_attribs=True)
 class MoleculePreprocessor:
     config: PreprocessingConfig
 
@@ -35,16 +35,16 @@ class MoleculePreprocessor:
             str: SMILES string of preprocessed molecule.
         """
         try:
-            mol = self.parse_smiles(smiles)
-            mol = self.apply_conversions(mol)
-            self.apply_filters(mol)
+            mol = self._parse_smiles(smiles)
+            mol = self._apply_conversions(mol)
+            self._apply_filters(mol)
 
         except PreprocessingException:
             return
 
         return MolToSmiles(mol)
 
-    def parse_smiles(self, smiles: str) -> Mol:
+    def _parse_smiles(self, smiles: str) -> Mol:
         """Parses SMILES string to RDKit molecule.
 
         Args:
@@ -60,7 +60,7 @@ class MoleculePreprocessor:
 
         return mol
 
-    def apply_conversions(self, mol: Mol) -> Mol:
+    def _apply_conversions(self, mol: Mol) -> Mol:
         """Apply conversion methods to molecule.
 
         Args:
@@ -71,7 +71,7 @@ class MoleculePreprocessor:
         """
         return self.config.convert.apply(mol)
 
-    def apply_filters(self, mol: Mol) -> None:
+    def _apply_filters(self, mol: Mol) -> None:
         """Check whether molecule passes filters defined in preprocessing config.
 
         Args:
