@@ -4,6 +4,7 @@ import yaml
 from pandas.testing import assert_frame_equal, assert_index_equal
 
 from mol_gen.preprocessing.dask import (
+    apply_molecule_preprocessor_to_parquet,
     apply_molecule_preprocessor_to_partition,
     drop_duplicates_and_repartition_parquet,
 )
@@ -27,6 +28,68 @@ def smiles():
         columns=["SMILES"],
         index=[0, 3, 4, 5, 6, 7, 8, 10, 11, 12],
     )
+
+
+@pytest.fixture
+def valid_config_section():
+    return {
+        "convert": ["neutralise_salts", "remove_stereochemistry"],
+        "filter": {
+            "allowed_elements": ["H", "C", "N", "O", "F", "S", "Cl", "Br"],
+            "range_filters": {
+                "molecular_weight": {"min": 180, "max": 480},
+            },
+        },
+    }
+
+
+@pytest.fixture
+def config_path(tmpdir, valid_config_section):
+    config_path = tmpdir.join("preprocessing.yml")
+
+    with open(config_path, "w") as f:
+        yaml.dump(valid_config_section, f)
+
+    return config_path
+
+
+class TestApplyMoleculePreprocessorToParquet:
+    @pytest.fixture
+    def input_dir(self, tmpdir, smiles):
+        input_dir = tmpdir.join("smiles")
+
+        smiles.to_parquet(input_dir)
+
+        return input_dir
+
+    @pytest.fixture
+    def output_dir(self, tmpdir):
+        return tmpdir.join("output")
+
+    def test_completes_given_valid_smiles(self, input_dir, output_dir, config_path):
+        apply_molecule_preprocessor_to_parquet(
+            input_dir, output_dir, config_path, "SMILES"
+        )
+
+    def test_writes_dataframe_with_smiles_column(
+        self, input_dir, output_dir, config_path
+    ):
+        apply_molecule_preprocessor_to_parquet(
+            input_dir, output_dir, config_path, "SMILES"
+        )
+
+        actual = pd.read_parquet(output_dir)
+
+        assert isinstance(actual, pd.DataFrame)
+        assert_index_equal(actual.columns, pd.Index(["SMILES"]))
+
+    def test_raises_exception_given_incorrect_column_name(
+        self, input_dir, output_dir, config_path
+    ):
+        with pytest.raises(KeyError):
+            apply_molecule_preprocessor_to_parquet(
+                input_dir, output_dir, config_path, "smiles"
+            )
 
 
 class TestApplyMoleculePreprocessorToPartition:
@@ -72,7 +135,7 @@ class TestApplyMoleculePreprocessorToPartition:
 
         actual = apply_molecule_preprocessor_to_partition(smiles, config_path, "SMILES")
 
-        assert not any(actual.str.contains("invalid smiles"))
+        assert not any(actual["SMILES"].str.contains("invalid smiles"))
 
     def test_raises_exception_given_incorrect_column_name(self, smiles, config_path):
         with pytest.raises(KeyError):
