@@ -6,6 +6,7 @@ from pandas.testing import assert_frame_equal, assert_index_equal
 from mol_gen.preprocessing.dask import (
     apply_molecule_preprocessor_to_parquet,
     apply_molecule_preprocessor_to_partition,
+    create_selfies_from_smiles,
     drop_duplicates_and_repartition_parquet,
 )
 
@@ -53,27 +54,31 @@ def config_path(tmpdir, valid_config_section):
     return config_path
 
 
-class TestApplyMoleculePreprocessorToParquet:
-    @pytest.fixture
-    def input_dir(self, tmpdir, smiles):
-        input_dir = tmpdir.join("smiles")
+@pytest.fixture
+def input_dir(tmpdir):
+    return tmpdir.join("smiles")
 
+
+@pytest.fixture
+def output_dir(tmpdir):
+    return tmpdir.join("output")
+
+
+class TestApplyMoleculePreprocessorToParquet:
+    def test_completes_given_valid_smiles(
+        self, smiles, input_dir, output_dir, config_path
+    ):
         smiles.to_parquet(input_dir)
 
-        return input_dir
-
-    @pytest.fixture
-    def output_dir(self, tmpdir):
-        return tmpdir.join("output")
-
-    def test_completes_given_valid_smiles(self, input_dir, output_dir, config_path):
         apply_molecule_preprocessor_to_parquet(
             input_dir, output_dir, config_path, "SMILES"
         )
 
     def test_writes_dataframe_with_smiles_column(
-        self, input_dir, output_dir, config_path
+        self, smiles, input_dir, output_dir, config_path
     ):
+        smiles.to_parquet(input_dir)
+
         apply_molecule_preprocessor_to_parquet(
             input_dir, output_dir, config_path, "SMILES"
         )
@@ -84,8 +89,10 @@ class TestApplyMoleculePreprocessorToParquet:
         assert_index_equal(actual.columns, pd.Index(["SMILES"]))
 
     def test_raises_exception_given_incorrect_column_name(
-        self, input_dir, output_dir, config_path
+        self, smiles, input_dir, output_dir, config_path
     ):
+        smiles.to_parquet(input_dir)
+
         with pytest.raises(KeyError):
             apply_molecule_preprocessor_to_parquet(
                 input_dir, output_dir, config_path, "smiles"
@@ -93,27 +100,6 @@ class TestApplyMoleculePreprocessorToParquet:
 
 
 class TestApplyMoleculePreprocessorToPartition:
-    @pytest.fixture
-    def valid_config_section(self):
-        return {
-            "convert": ["neutralise_salts", "remove_stereochemistry"],
-            "filter": {
-                "allowed_elements": ["H", "C", "N", "O", "F", "S", "Cl", "Br"],
-                "range_filters": {
-                    "molecular_weight": {"min": 180, "max": 480},
-                },
-            },
-        }
-
-    @pytest.fixture
-    def config_path(self, tmpdir, valid_config_section):
-        config_path = tmpdir.join("preprocessing.yml")
-
-        with open(config_path, "w") as f:
-            yaml.dump(valid_config_section, f)
-
-        return config_path
-
     def test_completes_given_valid_smiles(self, smiles, config_path):
         apply_molecule_preprocessor_to_partition(smiles, config_path, "SMILES")
 
@@ -124,14 +110,14 @@ class TestApplyMoleculePreprocessorToPartition:
         assert_index_equal(actual.columns, pd.Index(["SMILES"]))
 
     def test_returns_dataframe_with_no_missing_values(self, smiles, config_path):
-        smiles[0] = "invalid smiles"
+        smiles["SMILES"][0] = "invalid smiles"
 
         actual = apply_molecule_preprocessor_to_partition(smiles, config_path, "SMILES")
 
         assert all(actual.notna())
 
     def test_removes_invalid_smiles_strings(self, smiles, config_path):
-        smiles[0] = "invalid smiles"
+        smiles["SMILES"][0] = "invalid smiles"
 
         actual = apply_molecule_preprocessor_to_partition(smiles, config_path, "SMILES")
 
@@ -171,31 +157,80 @@ class TestDropDuplicatesAndRepartitionParquet:
             columns=["SMILES"],
         )
 
-    @pytest.fixture
-    def input_dir(self, tmpdir, duplicate_smiles):
-        input_dir = tmpdir.join("input")
+    def test_completes(self, duplicate_smiles, input_dir, output_dir):
         duplicate_smiles.to_parquet(input_dir)
-        return input_dir
 
-    @pytest.fixture
-    def output_dir(self, tmpdir):
-        return tmpdir.join("output")
-
-    def test_completes(self, input_dir, output_dir):
         drop_duplicates_and_repartition_parquet(input_dir, output_dir, column="SMILES")
 
-    def test_raises_exception_given_incorrect_column_name(self, input_dir, output_dir):
+    def test_raises_exception_given_incorrect_column_name(
+        self, duplicate_smiles, input_dir, output_dir
+    ):
+        duplicate_smiles.to_parquet(input_dir)
+
         with pytest.raises(KeyError):
             drop_duplicates_and_repartition_parquet(
                 input_dir, output_dir, column="smiles"
             )
 
-    def test_raises_exception_given_missing_parquet(self, tmpdir, output_dir):
+    def test_raises_exception_given_missing_parquet(self, input_dir, output_dir):
         with pytest.raises(Exception):
-            drop_duplicates_and_repartition_parquet(tmpdir, output_dir, column="SMILES")
+            drop_duplicates_and_repartition_parquet(
+                input_dir, output_dir, column="SMILES"
+            )
 
-    def test_writes_expected_parquet(self, input_dir, output_dir, smiles):
+    def test_writes_expected_parquet(
+        self, duplicate_smiles, input_dir, output_dir, smiles
+    ):
+        duplicate_smiles.to_parquet(input_dir)
+
         drop_duplicates_and_repartition_parquet(input_dir, output_dir, column="SMILES")
 
         output_df = pd.read_parquet(output_dir)
         assert_frame_equal(output_df, smiles, check_names=False)
+
+
+class TestCreateSelfiesFromSmiles:
+    def test_completes_given_valid_smiles(self, smiles, input_dir, output_dir):
+        smiles.to_parquet(input_dir)
+
+        create_selfies_from_smiles(input_dir, output_dir, "SMILES")
+
+    def test_returns_dataframe_with_selfies_column(self, smiles, input_dir, output_dir):
+        smiles.to_parquet(input_dir)
+
+        create_selfies_from_smiles(input_dir, output_dir, "SMILES")
+
+        actual = pd.read_parquet(output_dir)
+
+        assert isinstance(actual, pd.DataFrame)
+        assert_index_equal(actual.columns, pd.Index(["SELFIES"]))
+
+    def test_returns_dataframe_with_no_missing_values(
+        self, smiles, input_dir, output_dir
+    ):
+        smiles["SMILES"][0] = "invalid smiles"
+        smiles.to_parquet(input_dir)
+
+        create_selfies_from_smiles(input_dir, output_dir, "SMILES")
+
+        actual = pd.read_parquet(output_dir)
+
+        assert all(actual["SELFIES"].notna())
+
+    def test_removes_invalid_smiles_strings(self, smiles, input_dir, output_dir):
+        smiles["SMILES"] = "invalid smiles"
+        smiles.to_parquet(input_dir)
+
+        create_selfies_from_smiles(input_dir, output_dir, "SMILES")
+
+        actual = pd.read_parquet(output_dir)
+
+        assert not any(actual["SELFIES"].str.contains("invalid smiles"))
+
+    def test_raises_exception_given_incorrect_column_name(
+        self, smiles, input_dir, output_dir
+    ):
+        smiles.to_parquet(input_dir)
+
+        with pytest.raises(KeyError):
+            create_selfies_from_smiles(input_dir, output_dir, "smiles")
