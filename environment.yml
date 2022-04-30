@@ -26,6 +26,7 @@ dependencies:
   - matplotlib
   - numpy
   - pandas
+  - pyprojroot
   - rdkit
   - selfies
   - tensorflow

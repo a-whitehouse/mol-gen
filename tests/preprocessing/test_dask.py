@@ -195,7 +195,7 @@ class TestCreateSelfiesFromSmiles:
 
         create_selfies_from_smiles(input_dir, output_dir, "SMILES")
 
-    def test_returns_dataframe_with_selfies_column(self, smiles, input_dir, output_dir):
+    def test_writes_dataframe_with_expected_column(self, smiles, input_dir, output_dir):
         smiles.to_parquet(input_dir)
 
         create_selfies_from_smiles(input_dir, output_dir, "SMILES")
@@ -205,7 +205,16 @@ class TestCreateSelfiesFromSmiles:
         assert isinstance(actual, pd.DataFrame)
         assert_index_equal(actual.columns, pd.Index(["SELFIES"]))
 
-    def test_returns_dataframe_with_no_missing_values(
+    def test_writes_dataframe_with_selfies(self, smiles, input_dir, output_dir):
+        smiles.to_parquet(input_dir)
+
+        create_selfies_from_smiles(input_dir, output_dir, "SMILES")
+
+        actual = pd.read_parquet(output_dir)
+
+        assert all(actual["SELFIES"].str.contains(r"^(\[.+?\])*$", regex=True))
+
+    def test_writes_dataframe_with_no_missing_values(
         self, smiles, input_dir, output_dir
     ):
         smiles["SMILES"][0] = "invalid smiles"
