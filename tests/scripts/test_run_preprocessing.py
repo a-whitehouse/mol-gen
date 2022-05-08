@@ -97,7 +97,7 @@ class TestRunPreprocessing:
             ],
             check=True,
         )
-        actual = pd.read_parquet(tmpdir.join("selfies"))
+        actual = pd.read_parquet(tmpdir.join("selfies", "parquet"))
 
         assert isinstance(actual, pd.DataFrame)
         assert_index_equal(actual.columns, pd.Index(["SELFIES"]))
