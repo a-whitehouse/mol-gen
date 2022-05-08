@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
-from rdkit.Chem import MolFromSmiles, MolToSmiles
+from rdkit.Chem import MolFromSmiles, MolToSmiles, SanitizeFlags
 
 from mol_gen.config.preprocessing import PreprocessingConfig, filter
 from mol_gen.config.preprocessing.convert import CONVERT_METHODS
@@ -166,6 +166,10 @@ class TestMoleculePreprocessor:
         mocker,
         valid_config_section,
     ):
+        mocker.patch(
+            "mol_gen.preprocessing.preprocessor.SanitizeMol",
+            return_value=SanitizeFlags.SANITIZE_NONE,
+        )
         mocker.patch.dict(
             CONVERT_METHODS,
             {
