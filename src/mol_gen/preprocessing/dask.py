@@ -100,3 +100,17 @@ def create_selfies_from_smiles(input_dir: Path, output_dir: Path, column: str) -
 
     df["SELFIES"] = df[column].apply(encode_smiles_as_selfies, meta=(None, str))
     df[["SELFIES"]].dropna().to_parquet(output_dir)
+
+
+@run_with_distributed_client
+def write_parquet_as_text(input_dir: Path, output_dir: Path, column: str) -> None:
+    """Write single column of dataframe as text files.
+
+    Args:
+        input_dir (Path): Path to directory to read data as parquet.
+        output_dir (Path): Path to directory to write data as text.
+        column (str): Name of column to use from dataframe.
+    """
+    df = dd.read_parquet(input_dir)
+
+    df[column].to_csv(output_dir, index=False, header=False)
