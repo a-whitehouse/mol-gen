@@ -227,7 +227,7 @@ class TestCreateSelfiesFromSmiles:
         assert all(actual["SELFIES"].notna())
 
     def test_removes_invalid_smiles_strings(self, smiles, input_dir, output_dir):
-        smiles["SMILES"] = "invalid smiles"
+        smiles["SMILES"][0] = "invalid smiles"
         smiles.to_parquet(input_dir)
 
         create_selfies_from_smiles(input_dir, output_dir, "SMILES")

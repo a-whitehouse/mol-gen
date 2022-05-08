@@ -5,6 +5,7 @@ from mol_gen.config.preprocessing.convert import CONVERT_METHODS, ConvertConfig
 from mol_gen.exceptions import ConfigException
 from mol_gen.preprocessing.convert import (
     neutralise_salts,
+    remove_fragments,
     remove_isotopes,
     remove_stereochemistry,
 )
@@ -18,7 +19,12 @@ def mol():
 class TestConvertConfig:
     @pytest.fixture
     def valid_config_section(self):
-        return ["neutralise_salts", "remove_isotopes", "remove_stereochemistry"]
+        return [
+            "neutralise_salts",
+            "remove_fragments",
+            "remove_isotopes",
+            "remove_stereochemistry",
+        ]
 
     def test_parse_config_completes_given_valid_config_section(
         self, valid_config_section
@@ -39,6 +45,7 @@ class TestConvertConfig:
 
         assert config.methods == [
             neutralise_salts,
+            remove_fragments,
             remove_isotopes,
             remove_stereochemistry,
         ]
@@ -68,6 +75,7 @@ class TestConvertConfig:
             CONVERT_METHODS,
             {
                 "neutralise_salts": lambda x: MolToSmiles(x) + "_neutral",
+                "remove_fragments": lambda x: x + "_single_fragment",
                 "remove_isotopes": lambda x: x + "_isotope_free",
                 "remove_stereochemistry": lambda x: x + "_achiral",
             },
@@ -76,4 +84,4 @@ class TestConvertConfig:
 
         converted_mol = config.apply(mol)
 
-        assert converted_mol == "CCC_neutral_isotope_free_achiral"
+        assert converted_mol == "CCC_neutral_single_fragment_isotope_free_achiral"

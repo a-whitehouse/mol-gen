@@ -1,6 +1,6 @@
 import attr
 import pandas as pd
-from rdkit.Chem import Mol, MolFromSmiles, MolToSmiles
+from rdkit.Chem import Mol, MolFromSmiles, MolToSmiles, SanitizeFlags, SanitizeMol
 
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.exceptions import PreprocessingException
@@ -69,7 +69,15 @@ class MoleculePreprocessor:
         Returns:
             str: Converted molecule.
         """
-        return self.config.convert.apply(mol)
+        mol = self.config.convert.apply(mol)
+
+        sanitise_flags = SanitizeMol(mol, catchErrors=True)
+        if sanitise_flags != SanitizeFlags.SANITIZE_NONE:
+            raise PreprocessingException(
+                f"Converted molecule failed sanitation({sanitise_flags})."
+            )
+
+        return mol
 
     def _apply_filters(self, mol: Mol) -> None:
         """Check whether molecule passes filters defined in preprocessing config.

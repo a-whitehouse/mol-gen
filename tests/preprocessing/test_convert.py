@@ -3,6 +3,7 @@ from rdkit.Chem import Mol, MolFromSmiles
 
 from mol_gen.preprocessing.convert import (
     neutralise_salts,
+    remove_fragments,
     remove_isotopes,
     remove_stereochemistry,
 )
@@ -41,6 +42,36 @@ class TestNeutraliseSalts:
     )
     def test_converts_molecule_as_expected(self, mol, expected):
         actual = neutralise_salts(mol)
+
+        check_smiles_equivalent_to_molecule(actual, expected)
+
+
+class TestRemoveFragments:
+    @pytest.mark.parametrize(
+        "smiles",
+        ["CC.CC.CC1(C)CC2=CC=CC=C2C1O"],
+    )
+    def test_completes(self, mol):
+        remove_fragments(mol)
+
+    @pytest.mark.parametrize(
+        "smiles",
+        ["CC1(C)CC2=CC=CC=C2C1O"],
+    )
+    def test_leaves_fragment_free_molecule_unchanged(self, smiles, mol):
+        actual = remove_fragments(mol)
+
+        check_smiles_equivalent_to_molecule(actual, smiles)
+
+    @pytest.mark.parametrize(
+        "smiles, expected",
+        [
+            ("CC.CC.CC1(C)CC2=CC=CC=C2C1O", "CC1(C)CC2=CC=CC=C2C1O"),
+            ("CC1(C)CC2=CC=CC=C2C1O.CC1(C)CC2=CC=CC=C2C1O", "CC1(C)CC2=CC=CC=C2C1O"),
+        ],
+    )
+    def test_converts_molecule_as_expected(self, mol, expected):
+        actual = remove_fragments(mol)
 
         check_smiles_equivalent_to_molecule(actual, expected)
 
