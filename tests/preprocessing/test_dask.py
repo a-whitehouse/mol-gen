@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 import yaml
-from pandas.testing import assert_frame_equal, assert_index_equal
+from pandas.testing import assert_frame_equal, assert_index_equal, assert_series_equal
 
 from mol_gen.preprocessing.dask import (
     apply_molecule_preprocessor_to_parquet,
@@ -9,6 +9,7 @@ from mol_gen.preprocessing.dask import (
     create_selfies_from_smiles,
     drop_duplicates_and_repartition_parquet,
     get_selfies_token_counts_from_parquet,
+    get_selfies_tokens_from_partition,
 )
 
 
@@ -246,17 +247,18 @@ class TestCreateSelfiesFromSmiles:
             create_selfies_from_smiles(input_dir, output_dir, "smiles")
 
 
-class TestGetSelfiesTokenCountsFromParquet:
-    @pytest.fixture
-    def selfies(self):
-        return pd.DataFrame(
-            [
-                "[Br][C][Branch1][C][Br][=C][C][=N][C][=C][NH1][Ring1][Branch1]",
-                "[O][N][=C][C][C][C][Ring1][Ring2][C][=C][C][=C][C][=C][Ring1][=Branch1][Cl]",
-            ],
-            columns=["SELFIES"],
-        )
+@pytest.fixture
+def selfies():
+    return pd.DataFrame(
+        [
+            "[Br][C][Branch1][C][Br][=C][C][=N][C][=C][NH1][Ring1][Branch1]",
+            "[O][N][=C][C][C][C][Ring1][Ring2][C][=C][C][=C][C][=C][Ring1][=Branch1][Cl]",
+        ],
+        columns=["SELFIES"],
+    )
 
+
+class TestGetSelfiesTokenCountsFromParquet:
     def test_completes_given_valid_selfies(self, selfies, input_dir, output_dir):
         selfies.to_parquet(input_dir)
         output_dir.mkdir()
@@ -311,3 +313,59 @@ class TestGetSelfiesTokenCountsFromParquet:
         assert actual.loc["[O]", "count"] == 1
         assert actual.loc["[N]", "count"] == 1
         assert actual.loc["[Cl]", "count"] == 1
+
+
+class TestGetSelfiesTokensFromPartition:
+    def test_completes_given_valid_selfies(self, selfies):
+        get_selfies_tokens_from_partition(selfies, "SELFIES")
+
+    def test_returns_series_with_expected_name(self, selfies):
+        actual = get_selfies_tokens_from_partition(selfies, "SELFIES")
+
+        assert isinstance(actual, pd.Series)
+        assert actual.name == "SELFIES"
+
+    def test_returns_series_with_expected_tokens(self, selfies):
+        expected = pd.Series(
+            [
+                "[Br]",
+                "[C]",
+                "[Branch1]",
+                "[C]",
+                "[Br]",
+                "[=C]",
+                "[C]",
+                "[=N]",
+                "[C]",
+                "[=C]",
+                "[NH1]",
+                "[Ring1]",
+                "[Branch1]",
+                "[O]",
+                "[N]",
+                "[=C]",
+                "[C]",
+                "[C]",
+                "[C]",
+                "[Ring1]",
+                "[Ring2]",
+                "[C]",
+                "[=C]",
+                "[C]",
+                "[=C]",
+                "[C]",
+                "[=C]",
+                "[Ring1]",
+                "[=Branch1]",
+                "[Cl]",
+            ],
+            name="SELFIES",
+        )
+
+        actual = get_selfies_tokens_from_partition(selfies, "SELFIES")
+
+        assert_series_equal(actual, expected)
+
+    def test_raises_exception_given_incorrect_column_name(self, selfies):
+        with pytest.raises(KeyError):
+            get_selfies_tokens_from_partition(selfies, "selfies")
