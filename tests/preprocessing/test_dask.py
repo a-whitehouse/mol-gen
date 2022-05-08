@@ -8,6 +8,7 @@ from mol_gen.preprocessing.dask import (
     apply_molecule_preprocessor_to_partition,
     create_selfies_from_smiles,
     drop_duplicates_and_repartition_parquet,
+    get_selfies_token_counts_from_parquet,
 )
 
 
@@ -56,7 +57,7 @@ def config_path(tmpdir, valid_config_section):
 
 @pytest.fixture
 def input_dir(tmpdir):
-    return tmpdir.join("smiles")
+    return tmpdir.join("input")
 
 
 @pytest.fixture
@@ -243,3 +244,70 @@ class TestCreateSelfiesFromSmiles:
 
         with pytest.raises(KeyError):
             create_selfies_from_smiles(input_dir, output_dir, "smiles")
+
+
+class TestGetSelfiesTokenCountsFromParquet:
+    @pytest.fixture
+    def selfies(self):
+        return pd.DataFrame(
+            [
+                "[Br][C][Branch1][C][Br][=C][C][=N][C][=C][NH1][Ring1][Branch1]",
+                "[O][N][=C][C][C][C][Ring1][Ring2][C][=C][C][=C][C][=C][Ring1][=Branch1][Cl]",
+            ],
+            columns=["SELFIES"],
+        )
+
+    def test_completes_given_valid_selfies(self, selfies, input_dir, output_dir):
+        selfies.to_parquet(input_dir)
+        output_dir.mkdir()
+
+        get_selfies_token_counts_from_parquet(input_dir, output_dir, "SELFIES")
+
+    def test_writes_dataframe_with_expected_column(
+        self, selfies, input_dir, output_dir
+    ):
+        selfies.to_parquet(input_dir)
+        output_dir.mkdir()
+
+        get_selfies_token_counts_from_parquet(input_dir, output_dir, "SELFIES")
+
+        actual = pd.read_csv(output_dir / "token_counts.csv", index_col=0)
+
+        assert isinstance(actual, pd.DataFrame)
+        assert_index_equal(actual.columns, pd.Index(["count"]))
+        assert actual.index.name == "token"
+
+    def test_writes_dataframe_with_expected_number_of_tokens(
+        self, selfies, input_dir, output_dir
+    ):
+        selfies.to_parquet(input_dir)
+        output_dir.mkdir()
+
+        get_selfies_token_counts_from_parquet(input_dir, output_dir, "SELFIES")
+
+        actual = pd.read_csv(output_dir / "token_counts.csv", index_col=0)
+
+        assert len(actual) == 12
+
+    def test_writes_dataframe_with_expected_token_counts(
+        self, selfies, input_dir, output_dir
+    ):
+        selfies.to_parquet(input_dir)
+        output_dir.mkdir()
+
+        get_selfies_token_counts_from_parquet(input_dir, output_dir, "SELFIES")
+
+        actual = pd.read_csv(output_dir / "token_counts.csv", index_col=0)
+
+        assert actual.loc["[C]", "count"] == 10
+        assert actual.loc["[=C]", "count"] == 6
+        assert actual.loc["[Ring1]", "count"] == 3
+        assert actual.loc["[Br]", "count"] == 2
+        assert actual.loc["[Branch1]", "count"] == 2
+        assert actual.loc["[=N]", "count"] == 1
+        assert actual.loc["[NH1]", "count"] == 1
+        assert actual.loc["[Ring2]", "count"] == 1
+        assert actual.loc["[=Branch1]", "count"] == 1
+        assert actual.loc["[O]", "count"] == 1
+        assert actual.loc["[N]", "count"] == 1
+        assert actual.loc["[Cl]", "count"] == 1
