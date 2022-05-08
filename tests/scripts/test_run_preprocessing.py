@@ -1,5 +1,6 @@
 from subprocess import run
 
+import dask.dataframe as dd
 import pandas as pd
 import pytest
 import yaml
@@ -97,7 +98,50 @@ class TestRunPreprocessing:
             ],
             check=True,
         )
-        actual = pd.read_parquet(tmpdir.join("selfies"))
+        actual = pd.read_parquet(tmpdir.join("selfies", "parquet"))
 
         assert isinstance(actual, pd.DataFrame)
         assert_index_equal(actual.columns, pd.Index(["SELFIES"]))
+
+    def test_writes_selfies_text(self, tmpdir, script_path, input_path, config_path):
+        run(
+            [
+                "python",
+                script_path,
+                "--input",
+                input_path,
+                "--output",
+                tmpdir,
+                "--config",
+                config_path,
+                "--column",
+                "SMILES",
+            ],
+            check=True,
+        )
+        actual = dd.read_csv(tmpdir.join("selfies", "text", "*"), header=None).compute()
+
+        assert isinstance(actual, pd.DataFrame)
+
+    def test_writes_selfies_token_counts(
+        self, tmpdir, script_path, input_path, config_path
+    ):
+        run(
+            [
+                "python",
+                script_path,
+                "--input",
+                input_path,
+                "--output",
+                tmpdir,
+                "--config",
+                config_path,
+                "--column",
+                "SMILES",
+            ],
+            check=True,
+        )
+        actual = pd.read_csv(tmpdir.join("selfies", "token_counts.csv"), index_col=0)
+
+        assert isinstance(actual, pd.DataFrame)
+        assert_index_equal(actual.columns, pd.Index(["count"]))

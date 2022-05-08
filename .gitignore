@@ -1,6 +1,7 @@
 # Project stuff
 *.csv
 *.parquet
+*.part
 *.gz
 dask-worker-space/
 *_metadata

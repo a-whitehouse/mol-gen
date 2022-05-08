@@ -6,6 +6,8 @@ from mol_gen.preprocessing.dask import (
     apply_molecule_preprocessor_to_parquet,
     create_selfies_from_smiles,
     drop_duplicates_and_repartition_parquet,
+    get_selfies_token_counts_from_parquet,
+    write_parquet_as_text,
 )
 
 
@@ -43,16 +45,21 @@ def main():
     output_dir = Path(args.output)
     intermediate_dir = output_dir / "intermediate"
     preprocessed_smiles_dir = output_dir / "smiles"
+
     selfies_dir = output_dir / "selfies"
+    selfies_parquet_dir = selfies_dir / "parquet"
+    selfies_text_dir = selfies_dir / "text"
 
     if not preprocessed_smiles_dir.exists():
         print("Starting preprocessing of SMILES strings")
         apply_molecule_preprocessor_to_parquet(
             args.input, intermediate_dir, args.config, args.column
         )
+        print("Removing duplicate molecules and repartitioning files")
         drop_duplicates_and_repartition_parquet(
             intermediate_dir, preprocessed_smiles_dir, column="SMILES"
         )
+        print("Removing intermediate files")
         rmtree(intermediate_dir)
 
     else:
@@ -62,8 +69,18 @@ def main():
     if not selfies_dir.exists():
         print("Starting encoding of SMILES strings as SELFIES")
         create_selfies_from_smiles(
-            preprocessed_smiles_dir, selfies_dir, column="SMILES"
+            preprocessed_smiles_dir, selfies_parquet_dir, column="SMILES"
         )
+        print("Counting SELFIES tokens")
+        get_selfies_token_counts_from_parquet(
+            selfies_parquet_dir, selfies_dir, column="SELFIES"
+        )
+        print("Writing SELFIES as text files")
+        write_parquet_as_text(selfies_parquet_dir, selfies_text_dir, column="SELFIES")
+
+    else:
+        print("Skipping preprocessing of SELFIES")
+        print("SELFIES directory already exists in output directory")
 
 
 if __name__ == "__main__":

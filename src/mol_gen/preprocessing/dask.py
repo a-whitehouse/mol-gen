@@ -4,6 +4,7 @@ from pathlib import Path
 import dask.dataframe as dd
 import pandas as pd
 from dask.distributed import Client
+from selfies import split_selfies
 
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.preprocessing.preprocessor import MoleculePreprocessor
@@ -34,8 +35,6 @@ def apply_molecule_preprocessor_to_parquet(
         config_path (Path): Path to config.
         column (str): Name of column to use for dropping duplicate rows.
     """
-    print("Executing preprocessing steps on input molecules")
-
     df = dd.read_parquet(input_dir)
 
     df.repartition(partition_size="25MB").map_partitions(
@@ -77,7 +76,6 @@ def drop_duplicates_and_repartition_parquet(
         output_dir (Path): Path to directory to write data as parquet.
         column (str): Name of column to use for dropping duplicate rows.
     """
-    print("Removing duplicate molecules and repartitioning files")
     df = dd.read_parquet(input_dir)
 
     df.drop_duplicates(subset=column, split_out=df.npartitions).repartition(
@@ -94,9 +92,60 @@ def create_selfies_from_smiles(input_dir: Path, output_dir: Path, column: str) -
         output_dir (Path): Path to directory to write data as parquet.
         column (str): Name of column containing SMILES strings.
     """
-    print("Creating SELFIES from SMILES strings")
-
     df = dd.read_parquet(input_dir)
 
     df["SELFIES"] = df[column].apply(encode_smiles_as_selfies, meta=(None, str))
     df[["SELFIES"]].dropna().to_parquet(output_dir)
+
+
+@run_with_distributed_client
+def get_selfies_token_counts_from_parquet(
+    input_dir: Path, output_dir: Path, column: str
+) -> None:
+    """Gets counts of SELFIES tokens from strings in dataframe column.
+
+    Args:
+        input_dir (Path): Path to directory to read data as parquet.
+        output_dir (Path): Path to directory to write token counts as csv.
+        column (str): Name of column containing SELFIES.
+    """
+    df = dd.read_parquet(input_dir)
+
+    counts = (
+        df.repartition(partition_size="25MB")
+        .map_partitions(
+            get_selfies_tokens_from_partition, column, meta=("SELFIES", str)
+        )
+        .value_counts()
+        .rename("count")
+        .compute()
+    )
+
+    counts.to_csv(output_dir / "token_counts.csv", index_label="token")
+
+
+def get_selfies_tokens_from_partition(df: pd.DataFrame, column: str) -> pd.Series:
+    """Gets individual SELFIES tokens from strings in dataframe column.
+
+    Args:
+        df (pd.DataFrame): SMILES string of molecules to preprocess.
+        column (str): Name of column containing SELFIES.
+
+    Returns:
+        pd.Series: SELFIES tokens.
+    """
+    return df[column].apply(split_selfies).apply(list).explode(ignore_index=True)
+
+
+@run_with_distributed_client
+def write_parquet_as_text(input_dir: Path, output_dir: Path, column: str) -> None:
+    """Write single column of dataframe as text files.
+
+    Args:
+        input_dir (Path): Path to directory to read data as parquet.
+        output_dir (Path): Path to directory to write data as text.
+        column (str): Name of column to use from dataframe.
+    """
+    df = dd.read_parquet(input_dir)
+
+    df[column].to_csv(output_dir, index=False, header=False)
