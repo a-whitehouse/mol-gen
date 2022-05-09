@@ -23,7 +23,6 @@ def run_with_distributed_client(func):
     return wrapped_func
 
 
-@run_with_distributed_client
 def apply_molecule_preprocessor_to_parquet(
     input_dir: Path, output_dir: Path, config_path: Path, column: str
 ) -> None:
@@ -83,7 +82,6 @@ def drop_duplicates_and_repartition_parquet(
     ).to_parquet(output_dir)
 
 
-@run_with_distributed_client
 def create_selfies_from_smiles(input_dir: Path, output_dir: Path, column: str) -> None:
     """Encodes SMILES strings as SELFIES.
 
@@ -98,7 +96,6 @@ def create_selfies_from_smiles(input_dir: Path, output_dir: Path, column: str) -
     df[["SELFIES"]].dropna().to_parquet(output_dir)
 
 
-@run_with_distributed_client
 def get_selfies_token_counts_from_parquet(
     input_dir: Path, output_dir: Path, column: str
 ) -> None:
@@ -137,7 +134,6 @@ def get_selfies_tokens_from_partition(df: pd.DataFrame, column: str) -> pd.Serie
     return df[column].apply(split_selfies).apply(list).explode(ignore_index=True)
 
 
-@run_with_distributed_client
 def write_parquet_as_text(input_dir: Path, output_dir: Path, column: str) -> None:
     """Write single column of dataframe as text files.
 

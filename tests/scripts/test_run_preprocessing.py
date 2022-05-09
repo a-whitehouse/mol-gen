@@ -42,7 +42,7 @@ def config_path(tmpdir, valid_config_section):
 
 
 class TestRunPreprocessing:
-    def test_completes_given_valid_input(
+    def test_completes_and_writes_expected_files_given_valid_input(
         self, tmpdir, script_path, input_path, config_path
     ):
         run(
@@ -61,87 +61,18 @@ class TestRunPreprocessing:
             check=True,
         )
 
-    def test_writes_smiles_parquet(self, tmpdir, script_path, input_path, config_path):
-        run(
-            [
-                "python",
-                script_path,
-                "--input",
-                input_path,
-                "--output",
-                tmpdir,
-                "--config",
-                config_path,
-                "--column",
-                "SMILES",
-            ],
-            check=True,
-        )
+        # Check SMILES parquet
         actual = pd.read_parquet(tmpdir.join("smiles"))
-
         assert isinstance(actual, pd.DataFrame)
-        assert_index_equal(actual.columns, pd.Index(["SMILES"]))
 
-    def test_writes_selfies_parquet(self, tmpdir, script_path, input_path, config_path):
-        run(
-            [
-                "python",
-                script_path,
-                "--input",
-                input_path,
-                "--output",
-                tmpdir,
-                "--config",
-                config_path,
-                "--column",
-                "SMILES",
-            ],
-            check=True,
-        )
+        # Check SELFIES parquet
         actual = pd.read_parquet(tmpdir.join("selfies", "parquet"))
-
         assert isinstance(actual, pd.DataFrame)
-        assert_index_equal(actual.columns, pd.Index(["SELFIES"]))
 
-    def test_writes_selfies_text(self, tmpdir, script_path, input_path, config_path):
-        run(
-            [
-                "python",
-                script_path,
-                "--input",
-                input_path,
-                "--output",
-                tmpdir,
-                "--config",
-                config_path,
-                "--column",
-                "SMILES",
-            ],
-            check=True,
-        )
+        # Check SELFIES text
         actual = dd.read_csv(tmpdir.join("selfies", "text", "*"), header=None).compute()
-
         assert isinstance(actual, pd.DataFrame)
 
-    def test_writes_selfies_token_counts(
-        self, tmpdir, script_path, input_path, config_path
-    ):
-        run(
-            [
-                "python",
-                script_path,
-                "--input",
-                input_path,
-                "--output",
-                tmpdir,
-                "--config",
-                config_path,
-                "--column",
-                "SMILES",
-            ],
-            check=True,
-        )
+        # Check SELFIES token counts
         actual = pd.read_csv(tmpdir.join("selfies", "token_counts.csv"), index_col=0)
-
         assert isinstance(actual, pd.DataFrame)
-        assert_index_equal(actual.columns, pd.Index(["count"]))

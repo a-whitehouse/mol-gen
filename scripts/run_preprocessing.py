@@ -7,6 +7,7 @@ from mol_gen.preprocessing.dask import (
     create_selfies_from_smiles,
     drop_duplicates_and_repartition_parquet,
     get_selfies_token_counts_from_parquet,
+    run_with_distributed_client,
     write_parquet_as_text,
 )
 
@@ -52,7 +53,7 @@ def main():
 
     if not preprocessed_smiles_dir.exists():
         print("Starting preprocessing of SMILES strings")
-        apply_molecule_preprocessor_to_parquet(
+        run_with_distributed_client(apply_molecule_preprocessor_to_parquet)(
             args.input, intermediate_dir, args.config, args.column
         )
         print("Removing duplicate molecules and repartitioning files")
@@ -68,15 +69,17 @@ def main():
 
     if not selfies_dir.exists():
         print("Starting encoding of SMILES strings as SELFIES")
-        create_selfies_from_smiles(
+        run_with_distributed_client(create_selfies_from_smiles)(
             preprocessed_smiles_dir, selfies_parquet_dir, column="SMILES"
         )
         print("Counting SELFIES tokens")
-        get_selfies_token_counts_from_parquet(
+        run_with_distributed_client(get_selfies_token_counts_from_parquet)(
             selfies_parquet_dir, selfies_dir, column="SELFIES"
         )
         print("Writing SELFIES as text files")
-        write_parquet_as_text(selfies_parquet_dir, selfies_text_dir, column="SELFIES")
+        run_with_distributed_client(write_parquet_as_text)(
+            selfies_parquet_dir, selfies_text_dir, column="SELFIES"
+        )
 
     else:
         print("Skipping preprocessing of SELFIES")
