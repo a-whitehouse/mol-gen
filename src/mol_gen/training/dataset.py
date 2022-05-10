@@ -1,6 +1,20 @@
 import tensorflow as tf
 
 
+def add_start_and_end_of_sequence_tokens_to_selfies(selfies: tf.Tensor) -> tf.Tensor:
+    """Adds start- and end-of-sequence tokens to SELFIES.
+
+    The null token '[nop]' is used as it is ignored by the selfies encoder.
+
+    Args:
+        selfies (tf.Tensor): SELFIES to pad.
+
+    Returns:
+        tf.Tensor: SELFIES with added tokens.
+    """
+    return tf.strings.join(["[nop]", selfies, "[nop]"])
+
+
 def split_selfies(selfies: tf.Tensor) -> tf.Tensor:
     """Splits SELFIES into individual tokens.
 
@@ -10,8 +24,7 @@ def split_selfies(selfies: tf.Tensor) -> tf.Tensor:
     Returns:
         tf.Tensor: Individual tokens.
     """
-    selfies = tf.strings.regex_replace(selfies, r"\]\[", "] [")
-    selfies = tf.strings.regex_replace(selfies, r"\]\.\[", "] . [")
+    selfies = tf.strings.regex_replace(selfies, r"\](\.?)\[", r"] \1 [")
     return tf.strings.split(selfies)
 
 
