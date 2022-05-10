@@ -29,10 +29,10 @@ dependencies:
   - pyprojroot
   - rdkit
   - selfies
-  - tensorflow
   - tqdm
 
   # src/mol_gen/
   - pip~=22.0
   - pip:
+    - tensorflow-gpu==2.8
     - -e .
