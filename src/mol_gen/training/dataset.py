@@ -1,4 +1,5 @@
 import tensorflow as tf
+from keras.layers import StringLookup
 
 
 def add_start_and_end_of_sequence_tokens_to_selfies(selfies: tf.Tensor) -> tf.Tensor:
@@ -13,6 +14,34 @@ def add_start_and_end_of_sequence_tokens_to_selfies(selfies: tf.Tensor) -> tf.Te
         tf.Tensor: SELFIES with added tokens.
     """
     return tf.strings.join(["[nop]", selfies, "[nop]"])
+
+
+def process_selfies_dataset(
+    dataset: tf.data.Dataset,
+    buffer_size: int,
+    batch_size: int,
+    string_lookup_layer: StringLookup,
+) -> tf.data.Dataset:
+    """Processes SELFIES dataset for training of model.
+
+    Args:
+        dataset (tf.data.Dataset): Dataset of SELFIES.
+        buffer_size (int): Buffer size for shuffling dataset.
+        batch_size (int): Batch size for padded batch.
+        string_lookup_layer (StringLookup): String lookup layer for SELFIES tokens.
+
+    Returns:
+        tf.data.Dataset: Processed SELFIES.
+    """
+    return (
+        dataset.shuffle(buffer_size)
+        .map(add_start_and_end_of_sequence_tokens_to_selfies)
+        .map(split_selfies)
+        .padded_batch(batch_size, drop_remainder=True, padding_values="[nop]")
+        .map(string_lookup_layer)
+        .map(split_sequence_to_input_and_target)
+        .prefetch(tf.data.experimental.AUTOTUNE)
+    )
 
 
 def split_selfies(selfies: tf.Tensor) -> tf.Tensor:
@@ -42,4 +71,4 @@ def split_sequence_to_input_and_target(
     Returns:
         tuple[tf.Tensor, tf.Tensor]: Input and target sequences.
     """
-    return sequence[:-1], sequence[1:]
+    return sequence[..., :-1], sequence[..., 1:]
