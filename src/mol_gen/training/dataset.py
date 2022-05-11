@@ -1,5 +1,6 @@
 import tensorflow as tf
 from keras.layers import StringLookup
+from tensorflow.data import TextLineDataset
 
 
 def add_start_and_end_of_sequence_tokens_to_selfies(selfies: tf.Tensor) -> tf.Tensor:
@@ -39,11 +40,11 @@ def get_selfies_string_lookup_layer(
 
 
 def process_selfies_dataset(
-    dataset: tf.data.Dataset,
+    dataset: TextLineDataset,
     buffer_size: int,
     batch_size: int,
     string_lookup_layer: StringLookup,
-) -> tf.data.Dataset:
+):
     """Processes SELFIES dataset for training of model.
 
     Args:
