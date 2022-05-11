@@ -196,8 +196,51 @@ class TestProcessSelfiesDataset:
 
 
 class TestSplitSelfies:
-    pass
+    def test_completes_given_valid_input(self):
+        selfies = tf.constant("[C][C][N][Branch1][P][C][=Branch1][C][=O]")
+
+        split_selfies(selfies)
+
+    def test_returns_expected_tokens(self):
+        selfies = tf.constant("[C][C][N][Branch1][P][C][=Branch1][C][=O]")
+
+        actual = split_selfies(selfies)
+
+        assert_array_equal(
+            actual,
+            tf.constant(
+                [
+                    "[C]",
+                    "[C]",
+                    "[N]",
+                    "[Branch1]",
+                    "[P]",
+                    "[C]",
+                    "[=Branch1]",
+                    "[C]",
+                    "[=O]",
+                ]
+            ),
+        )
 
 
 class TestSplitSequenceToInputAndTarget:
-    pass
+    def test_completes_given_valid_input(self):
+        selfies = tf.constant([0, 2, 2, 3, 0])
+
+        split_sequence_to_input_and_target(selfies)
+
+    def test_returns_tensor_pair(self):
+        actual = split_sequence_to_input_and_target(tf.constant([0, 2, 2, 3, 0]))
+
+        assert len(actual) == 2
+
+    def test_returns_expected_input_sequence(self):
+        actual, _ = split_sequence_to_input_and_target(tf.constant([0, 2, 2, 3, 0]))
+
+        assert_array_equal(actual, tf.constant([0, 2, 2, 3]))
+
+    def test_returns_expected_target_sequence(self):
+        _, actual = split_sequence_to_input_and_target(tf.constant([0, 2, 2, 3, 0]))
+
+        assert_array_equal(actual, tf.constant([2, 2, 3, 0]))
