@@ -18,8 +18,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--input",
         type=str,
-        help="""Path to 'selfies' directory created by preprocessing script,
-        containing SELFIES text directory and token counts.""",
+        help="""Path to directory created by preprocessing script,
+        containing 'selfies' directory with SELFIES text files and token counts.""",
     )
     parser.add_argument(
         "--output",
@@ -38,8 +38,8 @@ def main():
     input_dir = Path(args.input)
     output_dir = Path(args.output)
 
-    selfies_text_filepath = input_dir.joinpath("text", "*.part")
-    token_counts_filepath = input_dir.joinpath("token_counts.csv")
+    selfies_text_filepath = input_dir.joinpath("selfies", "text", "*.part")
+    token_counts_filepath = input_dir.joinpath("selfies", "token_counts.csv")
 
     vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
     string_to_integer_layer = get_selfies_string_lookup_layer(vocabulary)
