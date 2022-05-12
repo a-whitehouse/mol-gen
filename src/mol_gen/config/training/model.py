@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from attrs import frozen
 
 
@@ -9,7 +11,7 @@ class ModelConfig:
     lstm_units: int
 
     @classmethod
-    def parse_config(cls, config: list[str]) -> ModelConfig:
+    def parse_config(cls, config: dict[str, Any]) -> ModelConfig:
         """Parses model section of training config.
 
         Args:

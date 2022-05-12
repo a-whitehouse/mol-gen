@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from attrs import frozen
 
 
@@ -9,7 +11,7 @@ class DatasetConfig:
     batch_size: int
 
     @classmethod
-    def parse_config(cls, config: list[str]) -> DatasetConfig:
+    def parse_config(cls, config: dict[str, Any]) -> DatasetConfig:
         """Parses dataset section of training config.
 
         Args:

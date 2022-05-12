@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from attrs import frozen
-from yaml import YAMLError, safe_load
 
 from mol_gen.config.preprocessing.convert import ConvertConfig
 from mol_gen.config.preprocessing.filter import FilterConfig
-from mol_gen.exceptions import ConfigException
+from mol_gen.utils import read_yaml_config_file
 
 
 @frozen
@@ -46,14 +45,6 @@ class PreprocessingConfig:
         Returns:
             PreprocessingConfig: Class representing config.
         """
-        try:
-            with open(filepath) as f:
-                config_dict = safe_load(f)
-        except FileNotFoundError:
-            raise ConfigException(f"File at {filepath} does not exist.")
-        except YAMLError as e:
-            raise ConfigException(
-                f"File at {filepath} does not contain valid yaml: {e}"
-            )
+        config_dict = read_yaml_config_file(filepath)
 
         return cls.parse_config(config_dict)
