@@ -74,7 +74,7 @@ filter:
             max: <numeric>
 ```
 
-An example config file can be found [here](examples/preprocess.yml).
+An example config file can be found [here](examples/preprocessing.yml).
 
 ### convert
 
