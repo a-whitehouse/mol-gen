@@ -4,6 +4,8 @@ from typing import Any
 
 from attrs import frozen
 
+from mol_gen.exceptions import ConfigException
+
 
 @frozen
 class ModelConfig:
@@ -24,8 +26,12 @@ class ModelConfig:
         Returns:
             ConvertConfig: Class representing section of config.
         """
-        return cls(
-            embedding_dim=config["embedding_dim"],
-            lstm_units=config["lstm_units"],
-            dropout=config.get("dropout", 0),
-        )
+        try:
+            return cls(
+                embedding_dim=config["embedding_dim"],
+                lstm_units=config["lstm_units"],
+                dropout=config.get("dropout", 0),
+            )
+
+        except KeyError as e:
+            raise ConfigException("Required section missing:", e)

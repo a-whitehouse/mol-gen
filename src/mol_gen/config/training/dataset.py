@@ -4,6 +4,8 @@ from typing import Any
 
 from attrs import frozen
 
+from mol_gen.exceptions import ConfigException
+
 
 @frozen
 class DatasetConfig:
@@ -23,4 +25,10 @@ class DatasetConfig:
         Returns:
             ConvertConfig: Class representing section of config.
         """
-        return cls(buffer_size=config["buffer_size"], batch_size=config["batch_size"])
+        try:
+            return cls(
+                buffer_size=config["buffer_size"], batch_size=config["batch_size"]
+            )
+
+        except KeyError as e:
+            raise ConfigException("Required section missing:", e)
