@@ -93,21 +93,3 @@ class TestPreprocessingConfig:
         config = PreprocessingConfig.from_file(valid_config_file)
 
         assert isinstance(config, PreprocessingConfig)
-
-    def test_from_file_raises_exception_given_file_not_found(self, tmpdir):
-        fp = tmpdir.join("preprocessing.yml")
-
-        with pytest.raises(ConfigException) as excinfo:
-            PreprocessingConfig.from_file(fp)
-
-        assert "does not exist" in str(excinfo.value)
-
-    def test_from_file_raises_exception_given_file_not_valid_yaml(self, tmpdir):
-        fp = tmpdir.join("preprocessing.yml")
-        with open(fp, "w") as fh:
-            fh.write("convert: [")
-
-        with pytest.raises(ConfigException) as excinfo:
-            PreprocessingConfig.from_file(fp)
-
-        assert "does not contain valid yaml" in str(excinfo.value)

@@ -20,7 +20,7 @@ class FilterConfig:
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> FilterConfig:
-        """Parse filter section of preprocessing config.
+        """Parses filter section of preprocessing config.
 
         Args:
             config (dict[str, Any]): Section of config.
@@ -73,7 +73,7 @@ class ElementsFilter:
 
     @classmethod
     def parse_config(cls, config: list[str]) -> ElementsFilter:
-        """Parse allowed_elements section of preprocessing config.
+        """Parses allowed_elements section of preprocessing config.
 
         Args:
             config (list[str]): Section of config.
@@ -127,7 +127,7 @@ class RangeFilter:
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> RangeFilter:
-        """Parse range filter in range_filters section of preprocessing config.
+        """Parses range filter in range_filters section of preprocessing config.
 
         Args:
             config (list[str]): Section of config.

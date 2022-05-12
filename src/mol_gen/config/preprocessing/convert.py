@@ -27,7 +27,7 @@ class ConvertConfig:
 
     @classmethod
     def parse_config(cls, config: list[str]) -> ConvertConfig:
-        """Parse convert methods section of preprocessing config.
+        """Parses convert methods section of preprocessing config.
 
         Args:
             config (list[str]): Section of config.

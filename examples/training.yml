@@ -1,0 +1,7 @@
+dataset:
+    buffer_size: 1000000
+    batch_size: 1024
+model:
+    embedding_dim: 64
+    lstm_units: 128
+    dropout: 0.5
