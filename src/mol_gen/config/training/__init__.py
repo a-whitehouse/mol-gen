@@ -5,19 +5,19 @@ from typing import Any
 from attrs import frozen
 from yaml import YAMLError, safe_load
 
-from mol_gen.config.preprocessing.convert import ConvertConfig
-from mol_gen.config.preprocessing.filter import FilterConfig
+from mol_gen.config.training.dataset import DatasetConfig
+from mol_gen.config.training.model import ModelConfig
 from mol_gen.exceptions import ConfigException
 
 
 @frozen
-class PreprocessingConfig:
-    convert: ConvertConfig
-    filter: FilterConfig
+class TrainingConfig:
+    dataset: DatasetConfig
+    model: ModelConfig
 
     @classmethod
-    def parse_config(cls, config: dict[str, Any]) -> PreprocessingConfig:
-        """Parses preprocessing config.
+    def parse_config(cls, config: dict[str, Any]) -> TrainingConfig:
+        """Parses training config.
 
         Args:
             config (dict[str, Any]): Config.
@@ -29,12 +29,12 @@ class PreprocessingConfig:
             ConvertConfig: Class representing config.
         """
         return cls(
-            ConvertConfig.parse_config(config.get("convert")),
-            FilterConfig.parse_config(config.get("filter")),
+            DatasetConfig.parse_config(config["dataset"]),
+            ModelConfig.parse_config(config["model"]),
         )
 
     @classmethod
-    def from_file(cls, filepath: str) -> PreprocessingConfig:
+    def from_file(cls, filepath: str) -> TrainingConfig:
         """Parses preprocessing config from file.
 
         Args:
