@@ -23,6 +23,4 @@ class DatasetConfig:
         Returns:
             ConvertConfig: Class representing section of config.
         """
-        return cls(
-            buffer_size=config.get("buffer_size"), batch_size=config.get("batch_size")
-        )
+        return cls(buffer_size=config["buffer_size"], batch_size=config["batch_size"])

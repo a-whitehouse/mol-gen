@@ -9,6 +9,7 @@ from attrs import frozen
 class ModelConfig:
     embedding_dim: int
     lstm_units: int
+    dropout: float
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> ModelConfig:
@@ -24,6 +25,7 @@ class ModelConfig:
             ConvertConfig: Class representing section of config.
         """
         return cls(
-            embedding_dim=config.get("embedding_dim"),
-            lstm_units=config.get("lstm_units"),
+            embedding_dim=config["embedding_dim"],
+            lstm_units=config["lstm_units"],
+            dropout=config.get("dropout", 0),
         )
