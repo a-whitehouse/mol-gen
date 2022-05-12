@@ -4,13 +4,7 @@ import dask.dataframe as dd
 import pandas as pd
 import pytest
 import yaml
-from pandas.testing import assert_index_equal
 from pyprojroot import here
-
-
-@pytest.fixture
-def script_path():
-    return here().joinpath("scripts", "run_preprocessing.py")
 
 
 @pytest.fixture
@@ -43,12 +37,11 @@ def config_path(tmpdir, valid_config_section):
 
 class TestRunPreprocessing:
     def test_completes_and_writes_expected_files_given_valid_input(
-        self, tmpdir, script_path, input_path, config_path
+        self, tmpdir, input_path, config_path
     ):
         run(
             [
-                "python",
-                script_path,
+                "preprocess",
                 "--input",
                 input_path,
                 "--output",
