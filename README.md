@@ -53,7 +53,7 @@ To achieve this, the preprocessing step requires a config file.
 
 To run the preprocessing step, execute the [run_preprocessing.py](scripts/run_preprocessing.py) script:
 ```
-python scripts/run_preprocessing.py --config <path to config file> --input <path to directory containing full dataset of molecules> --output <path to directory to write preprocessed dataset>
+preprocess --config <path to config file> --input <path to directory containing full dataset of molecules> --output <path to directory to write preprocessed dataset>
 ```
 
 The input directory should contain csv files with a "SMILES" column containing SMILES strings of molecules.
