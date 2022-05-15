@@ -8,7 +8,7 @@ from mol_gen.exceptions import ConfigException
 
 
 def validate_set_size(instance, attribute, value):
-    if not isinstance(value, (float)) or (value < 0) or (value >= 1):
+    if not isinstance(value, (float)) or (value <= 0) or (value >= 1):
         raise ConfigException(
             f"Size for {attribute.name} set should be a number between 0 and 1."
         )
