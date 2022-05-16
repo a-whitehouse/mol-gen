@@ -86,7 +86,7 @@ class TestPreprocessingConfig:
         PreprocessingConfig.parse_config(valid_config_section)
 
         spy_config.assert_called_once_with(
-            {"validate": 0.1, "test": 0.1},
+            {"validate": 0.1, "test": 0.2},
         )
 
     @pytest.fixture
