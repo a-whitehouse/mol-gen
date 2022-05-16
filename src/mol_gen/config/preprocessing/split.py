@@ -16,8 +16,8 @@ def validate_set_size(instance, attribute, value):
 
 @frozen
 class SplitConfig:
-    validate = field(validator=validate_set_size)
-    test = field(validator=validate_set_size)
+    validate: float = field(validator=validate_set_size)
+    test: float = field(validator=validate_set_size)
 
     def __attrs_post_init__(self):
         if (self.validate + self.test) >= 1:
