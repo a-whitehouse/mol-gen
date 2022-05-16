@@ -32,7 +32,7 @@ def apply_molecule_preprocessor_to_parquet(
         input_dir (Path): Path to directory to read data as parquet.
         output_dir (Path): Path to directory to write data as parquet.
         config_path (Path): Path to config.
-        column (str): Name of column to use for dropping duplicate rows.
+        column (str): Name of column containing SMILES strings.
     """
     df = dd.read_parquet(input_dir)
 
