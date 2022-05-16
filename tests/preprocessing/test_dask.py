@@ -43,6 +43,7 @@ def valid_config_section():
                 "molecular_weight": {"min": 180, "max": 480},
             },
         },
+        "split": {"validate": 0.1, "test": 0.2},
     }
 
 

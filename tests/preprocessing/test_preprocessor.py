@@ -38,6 +38,7 @@ class TestMoleculePreprocessor:
                     "molecular_weight": {"min": 180, "max": 480},
                 },
             },
+            "split": {"validate": 0.1, "test": 0.2},
         }
 
     @pytest.fixture
