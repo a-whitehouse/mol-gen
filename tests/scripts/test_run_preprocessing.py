@@ -59,10 +59,6 @@ class TestRunPreprocessing:
         actual = pd.read_parquet(tmpdir.join("smiles"))
         assert isinstance(actual, pd.DataFrame)
 
-        # Check SELFIES parquet
-        actual = pd.read_parquet(tmpdir.join("selfies", "parquet"))
-        assert isinstance(actual, pd.DataFrame)
-
         # Check SELFIES text
         actual = dd.read_csv(tmpdir.join("selfies", "text", "*"), header=None).compute()
         assert isinstance(actual, pd.DataFrame)
