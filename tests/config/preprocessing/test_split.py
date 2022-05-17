@@ -56,3 +56,29 @@ class TestSplitConfig:
             str(excinfo.value)
             == "Total size for calibrate and test sets should be less than 1."
         )
+
+    def test_apply_completes_given_valid_config_section(self, config_section):
+        config = SplitConfig.parse_config(config_section)
+
+        config.apply()
+
+    def test_apply_calls_function_as_expected(self, mocker, config_section):
+        mock_assign_to_split = mocker.patch(
+            "mol_gen.config.preprocessing.split.assign_to_split",
+        )
+        config = SplitConfig.parse_config(config_section)
+
+        config.apply()
+
+        mock_assign_to_split.assert_called_once_with(0.1, 0.2)
+
+    def test_apply_returns_assignment(self, mocker, config_section):
+        mocker.patch(
+            "mol_gen.config.preprocessing.split.assign_to_split",
+            return_value="assigned_split",
+        )
+        config = SplitConfig.parse_config(config_section)
+
+        actual = config.apply()
+
+        assert actual == "assigned_split"
