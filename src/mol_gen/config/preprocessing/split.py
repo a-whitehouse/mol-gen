@@ -5,6 +5,7 @@ from typing import Any
 from attrs import field, frozen
 
 from mol_gen.exceptions import ConfigException
+from mol_gen.utils import assign_to_split
 
 
 def validate_set_size(instance, attribute, value):
@@ -40,10 +41,10 @@ class SplitConfig:
         """
         return cls(validate=config.get("validate"), test=config.get("test"))
 
-    def assign(self) -> str:
+    def apply(self) -> str:
         """Selects set at random from train/validate/test.
 
         Returns:
-            str: Split.
+            str: Assigned set.
         """
-        return "train"
+        return assign_to_split(self.validate, self.test)

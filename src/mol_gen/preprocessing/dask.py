@@ -1,5 +1,6 @@
 from functools import wraps
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import dask.dataframe as dd
 import pandas as pd
@@ -150,9 +151,13 @@ def create_splits_from_parquet(
     df = dd.read_parquet(input_dir)
     columns = df.columns
 
-    df["split"] = df.apply(lambda _: config.assign(), axis=1, meta=(None, str))
+    with TemporaryDirectory() as temp_dir:
+        df["split"] = df.apply(lambda _: config.apply(), axis=1, meta=(None, str))
 
-    for set_name in ("train", "validate", "test"):
-        df.loc[df["split"] == set_name, columns].to_csv(
-            output_dir.joinpath(set_name), index=False, header=False
-        )
+        df.to_parquet(temp_dir)
+        df = dd.read_parquet(temp_dir)
+
+        for split in ("train", "validate", "test"):
+            df.loc[df["split"] == split, columns].to_csv(
+                output_dir.joinpath(split), index=False, header=False
+            )
