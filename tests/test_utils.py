@@ -3,12 +3,40 @@ import yaml
 from rdkit.Chem import Mol, MolFromSmiles
 
 from mol_gen.exceptions import ConfigException
-from mol_gen.utils import check_smiles_equivalent_to_molecule, read_yaml_config_file
+from mol_gen.utils import (
+    assign_to_split,
+    check_smiles_equivalent_to_molecule,
+    read_yaml_config_file,
+)
 
 
 @pytest.fixture
 def mol(smiles: str) -> Mol:
     return MolFromSmiles(smiles)
+
+
+class TestAssignToSplit:
+    def test_completes(self):
+        assign_to_split(validate_size=0.1, test_size=0.2)
+
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (0, "train"),
+            (0.3, "train"),
+            (0.69, "train"),
+            (0.7, "validate"),
+            (0.79, "validate"),
+            (0.8, "test"),
+            (0.99, "test"),
+        ],
+    )
+    def test_assigns_expected_split_given_mock_values(self, mocker, value, expected):
+        mocker.patch("mol_gen.utils.random", return_value=value)
+
+        actual = assign_to_split(validate_size=0.1, test_size=0.2)
+
+        assert actual == expected
 
 
 class TestCheckSMILESEquivalentToMolecule:
