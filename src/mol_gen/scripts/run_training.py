@@ -39,7 +39,7 @@ def main():
     input_dir = Path(args.input)
     output_dir = Path(args.output)
 
-    selfies_text_filepath = input_dir.joinpath("selfies", "text", "*.part")
+    selfies_train_filepath = input_dir.joinpath("selfies", "train", "*.part")
     token_counts_filepath = input_dir.joinpath("selfies", "token_counts.csv")
 
     config = TrainingConfig.from_file(args.config)
@@ -47,7 +47,7 @@ def main():
     vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
     string_to_integer_layer = get_selfies_string_lookup_layer(vocabulary)
 
-    dataset = TextLineDataset(TextLineDataset.list_files(str(selfies_text_filepath)))
+    dataset = TextLineDataset(TextLineDataset.list_files(str(selfies_train_filepath)))
     dataset = process_selfies_dataset(
         dataset,
         config.dataset.buffer_size,
