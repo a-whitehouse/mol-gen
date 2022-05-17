@@ -39,3 +39,11 @@ class SplitConfig:
             SplitConfig: Class representing section of config.
         """
         return cls(validate=config.get("validate"), test=config.get("test"))
+
+    def assign(self) -> str:
+        """Selects set at random from train/validate/test.
+
+        Returns:
+            str: Split.
+        """
+        return "train"

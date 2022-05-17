@@ -7,6 +7,7 @@ from dask.distributed import Client
 from selfies import split_selfies
 
 from mol_gen.config.preprocessing import PreprocessingConfig
+from mol_gen.config.preprocessing.split import SplitConfig
 from mol_gen.preprocessing.preprocessor import MoleculePreprocessor
 from mol_gen.preprocessing.selfies import encode_smiles_as_selfies
 
@@ -134,14 +135,24 @@ def get_selfies_tokens_from_partition(df: pd.DataFrame, column: str) -> pd.Serie
     return df[column].apply(split_selfies).apply(list).explode(ignore_index=True)
 
 
-def write_parquet_as_text(input_dir: Path, output_dir: Path, column: str) -> None:
-    """Write single column of dataframe as text files.
+def create_splits_from_parquet(
+    input_dir: Path, output_dir: Path, config: SplitConfig
+) -> None:
+    """Splits dataframe by row to separate train/validate/test sets.
+
+    Created sets are written in the corresponding subdirectory as text files.
 
     Args:
         input_dir (Path): Path to directory to read data as parquet.
-        output_dir (Path): Path to directory to write data as text.
-        column (str): Name of column to use from dataframe.
+        output_dir (Path): Path to directory to write split data.
+        config (SplitConfig): Config with validate and test set sizes.
     """
     df = dd.read_parquet(input_dir)
+    columns = df.columns
 
-    df[column].to_csv(output_dir, index=False, header=False)
+    df["split"] = df.apply(lambda _: config.assign(), axis=1, meta=(None, str))
+
+    for set_name in ("train", "validate", "test"):
+        df.loc[df["split"] == set_name, columns].to_csv(
+            output_dir.joinpath(set_name), index=False, header=False
+        )

@@ -2,13 +2,14 @@ import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.preprocessing.dask import (
     apply_molecule_preprocessor_to_parquet,
     create_selfies_from_smiles,
+    create_splits_from_parquet,
     drop_duplicates_and_repartition_parquet,
     get_selfies_token_counts_from_parquet,
     run_with_distributed_client,
-    write_parquet_as_text,
 )
 
 
@@ -80,7 +81,7 @@ def run_selfies_preprocessing(
         column (str): Name of column containing SMILES strings.
     """
     output_dir.mkdir(exist_ok=True)
-    selfies_text_dir = output_dir / "text"
+    config = PreprocessingConfig.from_file(config_path)
 
     with TemporaryDirectory() as temp_dir:
         print("Starting encoding of SMILES strings as SELFIES")
@@ -89,8 +90,8 @@ def run_selfies_preprocessing(
         print("Counting SELFIES tokens")
         get_selfies_token_counts_from_parquet(temp_dir, output_dir, "SELFIES")
 
-        print("Writing SELFIES as text files")
-        write_parquet_as_text(temp_dir, selfies_text_dir, "SELFIES")
+        print("Splitting SELFIES to separate train/validate/test sets")
+        create_splits_from_parquet(temp_dir, output_dir, config.split)
 
 
 def main():
