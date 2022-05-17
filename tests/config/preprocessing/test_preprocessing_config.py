@@ -4,7 +4,7 @@ import yaml
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.config.preprocessing.convert import ConvertConfig
 from mol_gen.config.preprocessing.filter import FilterConfig
-from mol_gen.exceptions import ConfigException
+from mol_gen.config.preprocessing.split import SplitConfig
 
 
 class TestPreprocessingConfig:
@@ -18,6 +18,7 @@ class TestPreprocessingConfig:
                     "molecular_weight": {"min": 180, "max": 480},
                 },
             },
+            "split": {"validate": 0.1, "test": 0.2},
         }
 
     def test_parse_config_completes_given_valid_config_section(
@@ -69,6 +70,23 @@ class TestPreprocessingConfig:
                     "molecular_weight": {"min": 180, "max": 480},
                 },
             }
+        )
+
+    def test_parse_config_sets_expected_split_config_given_valid_config_section(
+        self, valid_config_section
+    ):
+        config = PreprocessingConfig.parse_config(valid_config_section)
+
+        assert isinstance(config.split, SplitConfig)
+
+    def test_parse_config_calls_split_config_as_expected(
+        self, mocker, valid_config_section
+    ):
+        spy_config = mocker.spy(SplitConfig, "parse_config")
+        PreprocessingConfig.parse_config(valid_config_section)
+
+        spy_config.assert_called_once_with(
+            {"validate": 0.1, "test": 0.2},
         )
 
     @pytest.fixture

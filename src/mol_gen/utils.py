@@ -1,9 +1,33 @@
+from random import random
 from typing import Any
 
 from rdkit.Chem import CanonSmiles, Mol, MolToSmiles
 from yaml import YAMLError, safe_load
 
 from mol_gen.exceptions import ConfigException
+
+
+def assign_to_split(validate_size: float, test_size: float) -> str:
+    """Selects set at random from train/validate/test.
+
+    Args:
+        validate_size (float): Validation set proportion.
+        test_size (float): Test set proportion.
+
+    Returns:
+        str: Assigned set.
+    """
+    train_size = 1 - (validate_size + test_size)
+    value = random()
+
+    if value < train_size:
+        return "train"
+
+    elif value < 1 - test_size:
+        return "validate"
+
+    else:
+        return "test"
 
 
 def check_smiles_equivalent_to_molecule(mol: Mol, smiles: str) -> None:

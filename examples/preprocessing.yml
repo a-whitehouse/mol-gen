@@ -23,3 +23,6 @@ filter:
             max: 10
         topological_polar_surface_area:
             max: 140
+split:
+    validate: 0.1
+    test: 0.1

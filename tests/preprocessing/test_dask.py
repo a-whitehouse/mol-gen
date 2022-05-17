@@ -1,12 +1,18 @@
+from pathlib import Path
+
+import dask.dataframe as dd
 import pandas as pd
 import pytest
 import yaml
 from pandas.testing import assert_frame_equal, assert_index_equal, assert_series_equal
+from pyprojroot import here
 
+from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.preprocessing.dask import (
     apply_molecule_preprocessor_to_parquet,
     apply_molecule_preprocessor_to_partition,
     create_selfies_from_smiles,
+    create_splits_from_parquet,
     drop_duplicates_and_repartition_parquet,
     get_selfies_token_counts_from_parquet,
     get_selfies_tokens_from_partition,
@@ -43,6 +49,7 @@ def valid_config_section():
                 "molecular_weight": {"min": 180, "max": 480},
             },
         },
+        "split": {"validate": 0.1, "test": 0.2},
     }
 
 
@@ -369,3 +376,63 @@ class TestGetSelfiesTokensFromPartition:
     def test_raises_exception_given_incorrect_column_name(self, selfies):
         with pytest.raises(KeyError):
             get_selfies_tokens_from_partition(selfies, "selfies")
+
+
+class TestCreateSplitsFromParquet:
+    @pytest.fixture
+    def input_dir(self):
+        return here().joinpath("tests", "data", "preprocessed", "smiles")
+
+    @pytest.fixture
+    def config(self, valid_config_section):
+        return PreprocessingConfig.parse_config(valid_config_section).split
+
+    def test_completes(self, tmpdir, input_dir, config):
+        create_splits_from_parquet(input_dir, Path(tmpdir), config)
+
+    def test_creates_splits(self, tmpdir, input_dir, config):
+        create_splits_from_parquet(input_dir, Path(tmpdir), config)
+
+        train_split = dd.read_csv(tmpdir.join("train", "*"), names=["SMILES"]).compute()
+        assert isinstance(train_split, pd.DataFrame)
+        assert len(train_split)
+
+        validate_split = dd.read_csv(
+            tmpdir.join("validate", "*"), names=["SMILES"]
+        ).compute()
+        assert isinstance(validate_split, pd.DataFrame)
+        assert len(validate_split)
+
+        test_split = dd.read_csv(tmpdir.join("test", "*"), names=["SMILES"]).compute()
+        assert isinstance(test_split, pd.DataFrame)
+        assert len(test_split)
+
+    def test_creates_splits_with_expected_total_number_of_rows(
+        self, tmpdir, input_dir, config
+    ):
+        create_splits_from_parquet(input_dir, Path(tmpdir), config)
+
+        whole_dataset = pd.read_parquet(input_dir)
+
+        train_split = dd.read_csv(tmpdir.join("train", "*"), names=["SMILES"]).compute()
+        validate_split = dd.read_csv(
+            tmpdir.join("validate", "*"), names=["SMILES"]
+        ).compute()
+        test_split = dd.read_csv(tmpdir.join("test", "*"), names=["SMILES"]).compute()
+
+        assert len(train_split) + len(validate_split) + len(test_split) == len(
+            whole_dataset
+        )
+
+    def test_creates_splits_that_do_not_overlap(self, tmpdir, input_dir, config):
+        create_splits_from_parquet(input_dir, Path(tmpdir), config)
+
+        train_split = dd.read_csv(tmpdir.join("train", "*"), names=["SMILES"]).compute()
+        validate_split = dd.read_csv(
+            tmpdir.join("validate", "*"), names=["SMILES"]
+        ).compute()
+        test_split = dd.read_csv(tmpdir.join("test", "*"), names=["SMILES"]).compute()
+
+        assert not train_split["SMILES"].isin(validate_split["SMILES"]).sum()
+        assert not train_split["SMILES"].isin(test_split["SMILES"]).sum()
+        assert not validate_split["SMILES"].isin(test_split["SMILES"]).sum()

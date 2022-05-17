@@ -6,6 +6,7 @@ from attrs import frozen
 
 from mol_gen.config.preprocessing.convert import ConvertConfig
 from mol_gen.config.preprocessing.filter import FilterConfig
+from mol_gen.config.preprocessing.split import SplitConfig
 from mol_gen.utils import read_yaml_config_file
 
 
@@ -13,6 +14,7 @@ from mol_gen.utils import read_yaml_config_file
 class PreprocessingConfig:
     convert: ConvertConfig
     filter: FilterConfig
+    split: SplitConfig
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> PreprocessingConfig:
@@ -30,6 +32,7 @@ class PreprocessingConfig:
         return cls(
             ConvertConfig.parse_config(config.get("convert")),
             FilterConfig.parse_config(config.get("filter")),
+            SplitConfig.parse_config(config.get("split")),
         )
 
     @classmethod

@@ -1,14 +1,15 @@
 import argparse
 from pathlib import Path
-from shutil import rmtree
+from tempfile import TemporaryDirectory
 
+from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.preprocessing.dask import (
     apply_molecule_preprocessor_to_parquet,
     create_selfies_from_smiles,
+    create_splits_from_parquet,
     drop_duplicates_and_repartition_parquet,
     get_selfies_token_counts_from_parquet,
     run_with_distributed_client,
-    write_parquet_as_text,
 )
 
 
@@ -40,50 +41,86 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
+def run_smiles_preprocessing(
+    input_dir: Path,
+    output_dir: Path,
+    config_path: Path,
+    column: str,
+) -> None:
+    """Runs preprocessing methods and filters on input SMILES strings.
+
+    Args:
+        input_dir (Path): Path to directory to read data as parquet.
+        output_dir (Path): Path to directory to write data as parquet.
+        config_path (Path): Path to config.
+        column (str): Name of column containing SMILES strings.
+    """
+    with TemporaryDirectory() as temp_dir:
+        print("Starting preprocessing of SMILES strings")
+        run_with_distributed_client(apply_molecule_preprocessor_to_parquet)(
+            input_dir, temp_dir, config_path, column
+        )
+
+        print("Removing duplicate molecules and repartitioning files")
+        drop_duplicates_and_repartition_parquet(temp_dir, output_dir, "SMILES")
+
+
+@run_with_distributed_client
+def run_selfies_preprocessing(
+    input_dir: Path,
+    output_dir: Path,
+    config_path: Path,
+    column: str,
+) -> None:
+    """Encodes SMILES strings as SELFIES, calculates token counts and splits data.
+
+    Args:
+        input_dir (Path): Path to directory to read data as parquet.
+        output_dir (Path): Path to directory to write data as parquet.
+        config_path (Path): Path to config.
+        column (str): Name of column containing SMILES strings.
+    """
+    output_dir.mkdir(exist_ok=True)
+    config = PreprocessingConfig.from_file(config_path)
+
+    with TemporaryDirectory() as temp_dir:
+        print("Starting encoding of SMILES strings as SELFIES")
+        create_selfies_from_smiles(input_dir, temp_dir, column)
+
+        print("Counting SELFIES tokens")
+        get_selfies_token_counts_from_parquet(temp_dir, output_dir, "SELFIES")
+
+        print("Splitting SELFIES to separate train/validate/test sets")
+        create_splits_from_parquet(temp_dir, output_dir, config.split)
+
+
 def main():
     args = parse_args()
 
+    input_dir = Path(args.input)
     output_dir = Path(args.output)
-    intermediate_dir = output_dir / "intermediate"
-    preprocessed_smiles_dir = output_dir / "smiles"
+    config_path = Path(args.config)
 
+    smiles_dir = output_dir / "smiles"
     selfies_dir = output_dir / "selfies"
-    selfies_parquet_dir = selfies_dir / "parquet"
-    selfies_text_dir = selfies_dir / "text"
 
-    if not preprocessed_smiles_dir.exists():
-        print("Starting preprocessing of SMILES strings")
-        run_with_distributed_client(apply_molecule_preprocessor_to_parquet)(
-            args.input, intermediate_dir, args.config, args.column
-        )
-        print("Removing duplicate molecules and repartitioning files")
-        drop_duplicates_and_repartition_parquet(
-            intermediate_dir, preprocessed_smiles_dir, column="SMILES"
-        )
-        print("Removing intermediate files")
-        rmtree(intermediate_dir)
+    if not smiles_dir.exists():
+        run_smiles_preprocessing(input_dir, smiles_dir, config_path, args.column)
 
     else:
-        print("Skipping preprocessing of SMILES strings")
-        print("SMILES directory already exists in output directory")
+        print(
+            "Skipping preprocessing of SMILES strings\n"
+            "SMILES directory already exists in output directory"
+        )
 
     if not selfies_dir.exists():
-        print("Starting encoding of SMILES strings as SELFIES")
-        run_with_distributed_client(create_selfies_from_smiles)(
-            preprocessed_smiles_dir, selfies_parquet_dir, column="SMILES"
-        )
-        print("Counting SELFIES tokens")
-        run_with_distributed_client(get_selfies_token_counts_from_parquet)(
-            selfies_parquet_dir, selfies_dir, column="SELFIES"
-        )
-        print("Writing SELFIES as text files")
-        run_with_distributed_client(write_parquet_as_text)(
-            selfies_parquet_dir, selfies_text_dir, column="SELFIES"
-        )
+        run_selfies_preprocessing(smiles_dir, selfies_dir, config_path, "SMILES")
 
     else:
-        print("Skipping preprocessing of SELFIES")
-        print("SELFIES directory already exists in output directory")
+        print(
+            "Skipping preprocessing of SELFIES\n"
+            "SELFIES directory already exists in output directory"
+        )
 
 
 if __name__ == "__main__":
