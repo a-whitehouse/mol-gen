@@ -58,11 +58,28 @@ class TestRunPreprocessing:
         # Check SMILES parquet
         actual = pd.read_parquet(tmpdir.join("smiles"))
         assert isinstance(actual, pd.DataFrame)
+        assert len(actual)
 
-        # Check SELFIES text
-        actual = dd.read_csv(tmpdir.join("selfies", "text", "*"), header=None).compute()
+        # Check SELFIES train split
+        actual = dd.read_csv(
+            tmpdir.join("selfies", "train", "*"), header=None
+        ).compute()
         assert isinstance(actual, pd.DataFrame)
+        assert len(actual)
+
+        # Check SELFIES validate split
+        actual = dd.read_csv(
+            tmpdir.join("selfies", "validate", "*"), header=None
+        ).compute()
+        assert isinstance(actual, pd.DataFrame)
+        assert len(actual)
+
+        # Check SELFIES test split
+        actual = dd.read_csv(tmpdir.join("selfies", "test", "*"), header=None).compute()
+        assert isinstance(actual, pd.DataFrame)
+        assert len(actual)
 
         # Check SELFIES token counts
         actual = pd.read_csv(tmpdir.join("selfies", "token_counts.csv"), index_col=0)
         assert isinstance(actual, pd.DataFrame)
+        assert len(actual)
