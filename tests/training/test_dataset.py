@@ -143,22 +143,22 @@ class TestProcessSelfiesDataset:
         actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
 
         count = 0
-        for _ in actual.take(3):
+        for _ in actual.take(4):
             count += 1
 
-        assert count == 2
+        assert count == 3
 
     def test_returns_batches_of_same_size(self, dataset, string_to_integer_layer):
         actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
 
-        for input_tensor, target_tensor in actual.take(2):
+        for input_tensor, target_tensor in actual.take(3):
             assert input_tensor.shape[1] is not None
             assert target_tensor.shape[1] is not None
 
     def test_returns_tensor_pairs(self, dataset, string_to_integer_layer):
         actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
 
-        for i in actual.take(2):
+        for i in actual.take(3):
             assert len(i) == 2
 
     def test_returns_tensor_pairs_with_expected_dtype(
@@ -166,7 +166,7 @@ class TestProcessSelfiesDataset:
     ):
         actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
 
-        for input_tensor, target_tensor in actual.take(2):
+        for input_tensor, target_tensor in actual.take(3):
             assert input_tensor.dtype is tf.dtypes.int64
             assert target_tensor.dtype is tf.dtypes.int64
 
@@ -175,7 +175,7 @@ class TestProcessSelfiesDataset:
     ):
         actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
 
-        for input_tensor, target_tensor in actual.take(2):
+        for input_tensor, target_tensor in actual.take(3):
             assert_array_equal(input_tensor[..., 1:], target_tensor[..., :-1])
 
     def test_returns_input_tensor_with_start_of_sequence_token(
@@ -183,7 +183,7 @@ class TestProcessSelfiesDataset:
     ):
         actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
 
-        for input_tensor, _ in actual.take(2):
+        for input_tensor, _ in actual.take(3):
             assert all(input_tensor[..., 0] == 0)
 
     def test_returns_target_tensor_with_end_of_sequence_token(
@@ -191,7 +191,7 @@ class TestProcessSelfiesDataset:
     ):
         actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
 
-        for _, target_tensor in actual.take(2):
+        for _, target_tensor in actual.take(3):
             assert all(target_tensor[..., -1] == 0)
 
 
