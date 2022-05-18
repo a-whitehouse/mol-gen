@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import tensorflow as tf
 from keras.layers import StringLookup
 from tensorflow.data import TextLineDataset
+from tensorflow.python.data.ops.dataset_ops import PrefetchDataset
+
+from mol_gen.config.training.dataset import DatasetConfig
 
 
 def add_start_and_end_of_sequence_tokens_to_selfies(selfies: tf.Tensor) -> tf.Tensor:
@@ -39,12 +44,35 @@ def get_selfies_string_lookup_layer(
     )
 
 
+def get_selfies_dataset(
+    input_dir: Path, config: DatasetConfig, string_lookup_layer: StringLookup
+) -> PrefetchDataset:
+    """Reads all files from the directory into a TensorFlow dataset with pipeline.
+
+    Args:
+        input_dir (Path): Path to directory to read data as text.
+        config (DatasetConfig): Config with buffer size and batch size.
+        string_lookup_layer (StringLookup): String lookup layer for SELFIES tokens.
+
+    Returns:
+        PrefetchDataset: Processed SELFIES dataset.
+    """
+    filepath_pattern = str(input_dir.joinpath("*"))
+    data = TextLineDataset(TextLineDataset.list_files(filepath_pattern))
+    return process_selfies_dataset(
+        data,
+        config.buffer_size,
+        config.batch_size,
+        string_lookup_layer,
+    )
+
+
 def process_selfies_dataset(
     dataset: TextLineDataset,
     buffer_size: int,
     batch_size: int,
     string_lookup_layer: StringLookup,
-):
+) -> PrefetchDataset:
     """Processes SELFIES dataset for training of model.
 
     Args:
@@ -54,13 +82,13 @@ def process_selfies_dataset(
         string_lookup_layer (StringLookup): String lookup layer for SELFIES tokens.
 
     Returns:
-        tf.data.Dataset: Processed SELFIES.
+        tf.data.Dataset: Processed SELFIES dataset.
     """
     return (
         dataset.shuffle(buffer_size)
         .map(add_start_and_end_of_sequence_tokens_to_selfies)
         .map(split_selfies)
-        .padded_batch(batch_size, drop_remainder=True, padding_values="[nop]")
+        .padded_batch(batch_size, padding_values="[nop]")
         .map(string_lookup_layer)
         .map(split_sequence_to_input_and_target)
         .prefetch(tf.data.experimental.AUTOTUNE)
