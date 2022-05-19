@@ -5,6 +5,8 @@
 *.gz
 dask-worker-space/
 *_metadata
+*.h5
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

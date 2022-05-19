@@ -1,11 +1,16 @@
+from pathlib import Path
+
 import pytest
 import tensorflow as tf
 from keras.layers import StringLookup
 from numpy.testing import assert_array_equal
 from tensorflow.data import TextLineDataset
+from tensorflow.python.data.ops.dataset_ops import PrefetchDataset
 
+from mol_gen.config.training.dataset import DatasetConfig
 from mol_gen.training.dataset import (
     add_start_and_end_of_sequence_tokens_to_selfies,
+    get_selfies_dataset,
     get_selfies_string_lookup_layer,
     process_selfies_dataset,
     split_selfies,
@@ -14,7 +19,7 @@ from mol_gen.training.dataset import (
 
 
 @pytest.fixture
-def dataset(tmpdir):
+def train_filepath(tmpdir):
     selfies = [
         "[C][C][Branch1][#Branch2][C][=N][C][=C][N][=C][Ring1][=Branch1][Cl][C][C][=Branch1][C][=O][N][C][C][Branch1][=Branch1][C][Branch1][C][N][=O][C][C][C][Ring1][=Branch2][Ring2][Ring1][Ring2]\n",
         "[C][N][Branch1][=Branch2][C][C][=C][C][=C][O][Ring1][Branch1][C][=Branch1][C][=O][C][C][S][C][N][Ring1][Branch1][S][=Branch1][C][=O][=Branch1][C][=O][C][=C][C][=C][C][=C][Ring1][=Branch1]\n",
@@ -28,12 +33,17 @@ def dataset(tmpdir):
         "[C][C][Branch1][C][C][N][C][C][C][C][Branch2][Ring1][Ring2][N][C][C][N][Branch1][#Branch2][C][C][=C][C][=N][N][Ring1][Branch1][C][C][C][Ring1][=N][C][Ring2][Ring1][Ring1][=O]\n",
     ]
 
-    filepath = tmpdir.join("text")
+    filepath = tmpdir.join("train")
 
     with open(filepath, "w") as f:
         f.writelines(selfies)
 
-    return TextLineDataset(filepath)
+    return filepath
+
+
+@pytest.fixture
+def dataset(train_filepath):
+    return TextLineDataset(train_filepath)
 
 
 @pytest.fixture
@@ -135,9 +145,49 @@ class TestGetSelfiesStringLookupLayer:
         assert "[nop]" not in actual[1:]
 
 
+class TestGetSelfiesDataset:
+    @pytest.fixture
+    def input_dir(self, train_filepath):
+        return Path(train_filepath).parent
+
+    @pytest.fixture
+    def config_section(self):
+        return {"buffer_size": 1000000, "batch_size": 64}
+
+    @pytest.fixture
+    def config(self, config_section):
+        return DatasetConfig.parse_config(config_section)
+
+    def test_completes_given_valid_input(
+        self, input_dir, config, string_to_integer_layer
+    ):
+        get_selfies_dataset(input_dir, config, string_to_integer_layer)
+
+    def test_returns_prefetch_dataset(self, input_dir, config, string_to_integer_layer):
+        actual = get_selfies_dataset(input_dir, config, string_to_integer_layer)
+
+        assert isinstance(actual, PrefetchDataset)
+
+    def test_calls_function_as_expected(
+        self, mocker, input_dir, config, string_to_integer_layer
+    ):
+        mock_process = mocker.patch("mol_gen.training.dataset.process_selfies_dataset")
+
+        get_selfies_dataset(input_dir, config, string_to_integer_layer)
+
+        assert mock_process.call_args[0][1] == 1000000
+        assert mock_process.call_args[0][2] == 64
+        assert mock_process.call_args[0][3] == string_to_integer_layer
+
+
 class TestProcessSelfiesDataset:
     def test_completes_given_valid_input(self, dataset, string_to_integer_layer):
         process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
+
+    def test_returns_prefetch_dataset(self, dataset, string_to_integer_layer):
+        actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
+
+        assert isinstance(actual, PrefetchDataset)
 
     def test_returns_expected_number_of_batches(self, dataset, string_to_integer_layer):
         actual = process_selfies_dataset(dataset, 10_000, 4, string_to_integer_layer)
