@@ -2,6 +2,7 @@ name: molGenEnv
 channels:
   - conda-forge
   - defaults
+  - nvidia
   - rdkit
 dependencies:
   # Linters
@@ -20,6 +21,8 @@ dependencies:
 
   # Libraries
   - attrs
+  - cudnn=8.2
+  - cudatoolkit=11.2
   - dask
   - fastparquet
   - jupyterlab
