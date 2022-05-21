@@ -2,14 +2,13 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
-from tensorflow.data import TextLineDataset
 
 from mol_gen.config.training import TrainingConfig
 from mol_gen.training.dataset import (
+    get_selfies_dataset,
     get_selfies_string_lookup_layer,
-    process_selfies_dataset,
 )
-from mol_gen.training.model import train_selfies_model
+from mol_gen.training.model import get_compiled_model, train_model
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,7 +38,8 @@ def main():
     input_dir = Path(args.input)
     output_dir = Path(args.output)
 
-    selfies_train_filepath = input_dir.joinpath("selfies", "train", "*.part")
+    train_dir = input_dir.joinpath("selfies", "train")
+    validate_dir = input_dir.joinpath("selfies", "validate")
     token_counts_filepath = input_dir.joinpath("selfies", "token_counts.csv")
 
     config = TrainingConfig.from_file(args.config)
@@ -47,16 +47,16 @@ def main():
     vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
     string_to_integer_layer = get_selfies_string_lookup_layer(vocabulary)
 
-    dataset = TextLineDataset(TextLineDataset.list_files(str(selfies_train_filepath)))
-    dataset = process_selfies_dataset(
-        dataset,
-        config.dataset.buffer_size,
-        config.dataset.batch_size,
-        string_to_integer_layer,
+    training_data = get_selfies_dataset(
+        train_dir, config.dataset, string_to_integer_layer
+    )
+    validation_data = get_selfies_dataset(
+        validate_dir, config.dataset, string_to_integer_layer
     )
 
     vocab_size = string_to_integer_layer.vocabulary_size()
-    train_selfies_model(output_dir, dataset, vocab_size)
+    model = get_compiled_model(config.model, vocab_size)
+    train_model(output_dir, model, training_data, validation_data, config)
 
 
 if __name__ == "__main__":
