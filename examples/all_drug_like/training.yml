@@ -5,3 +5,5 @@ model:
     embedding_dim: 64
     lstm_units: 128
     dropout: 0.5
+    patience: 5
+    epochs: 100
