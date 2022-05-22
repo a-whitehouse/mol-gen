@@ -11,7 +11,13 @@ class TestTrainingConfig:
     def valid_config_section(self):
         return {
             "dataset": {"buffer_size": 1000000, "batch_size": 1024},
-            "model": {"embedding_dim": 64, "lstm_units": 128, "dropout": 0.5},
+            "model": {
+                "embedding_dim": 64,
+                "lstm_units": 128,
+                "dropout": 0.5,
+                "patience": 2,
+                "epochs": 50,
+            },
         }
 
     def test_parse_config_completes_given_valid_config_section(
@@ -55,7 +61,13 @@ class TestTrainingConfig:
         TrainingConfig.parse_config(valid_config_section)
 
         spy_config.assert_called_once_with(
-            {"embedding_dim": 64, "lstm_units": 128, "dropout": 0.5}
+            {
+                "embedding_dim": 64,
+                "lstm_units": 128,
+                "dropout": 0.5,
+                "patience": 2,
+                "epochs": 50,
+            }
         )
 
     @pytest.fixture
