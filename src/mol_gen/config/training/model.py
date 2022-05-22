@@ -12,6 +12,8 @@ class ModelConfig:
     embedding_dim: int
     lstm_units: int
     dropout: float
+    patience: int
+    epochs: int
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> ModelConfig:
@@ -31,6 +33,8 @@ class ModelConfig:
                 embedding_dim=config["embedding_dim"],
                 lstm_units=config["lstm_units"],
                 dropout=config.get("dropout", 0),
+                patience=config.get("patience", 5),
+                epochs=config.get("epochs", 100),
             )
 
         except KeyError as e:

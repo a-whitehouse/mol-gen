@@ -56,7 +56,7 @@ def main():
 
     vocab_size = string_to_integer_layer.vocabulary_size()
     model = get_compiled_model(config.model, vocab_size)
-    train_model(output_dir, model, training_data, validation_data, config)
+    train_model(output_dir, model, training_data, validation_data, config.model)
 
 
 if __name__ == "__main__":

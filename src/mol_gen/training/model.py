@@ -26,17 +26,17 @@ def train_model(
     """
     callbacks = [
         tf.keras.callbacks.EarlyStopping(
-            patience=5,
+            patience=config.patience,
         ),
         tf.keras.callbacks.ModelCheckpoint(
-            filepath=str(output_dir.joinpath("model.{epoch:02d}.h5"))
+            filepath=str(output_dir.joinpath("checkpoints", "model.{epoch:02d}.h5"))
         ),
         tf.keras.callbacks.TensorBoard(log_dir=str(output_dir.joinpath("logs"))),
     ]
     model.fit(
         training_data,
         validation_data=validation_data,
-        epochs=100,
+        epochs=config.epochs,
         callbacks=callbacks,
     )
 
