@@ -22,28 +22,6 @@ def add_start_and_end_of_sequence_tokens_to_selfies(selfies: tf.Tensor) -> tf.Te
     return tf.strings.join(["[nop]", selfies, "[nop]"])
 
 
-def get_selfies_string_lookup_layer(
-    vocabulary: list[str], invert: bool = False
-) -> StringLookup:
-    """Get string lookup layer from vocabulary for SELFIES.
-
-    The null token '[nop]' is used for the mask_token,
-    as it is ignored by the selfies encoder.
-
-    Args:
-        vocabulary (list[str]): Vocabulary for layer.
-        invert (bool, optional): Whether to map integers to strings. Defaults to False.
-
-    Returns:
-        StringLookup: Configured string lookup layer.
-    """
-    return StringLookup(
-        mask_token="[nop]",
-        vocabulary=[i for i in vocabulary if i != "[nop]"],
-        invert=invert,
-    )
-
-
 def get_selfies_dataset(
     input_dir: Path, config: DatasetConfig, string_lookup_layer: StringLookup
 ) -> PrefetchDataset:

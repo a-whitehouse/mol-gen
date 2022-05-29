@@ -4,11 +4,12 @@ from pathlib import Path
 import pandas as pd
 
 from mol_gen.config.training import TrainingConfig
-from mol_gen.training.dataset import (
-    get_selfies_dataset,
-    get_selfies_string_lookup_layer,
-)
+from mol_gen.training.dataset import get_selfies_dataset
 from mol_gen.training.model import get_compiled_model, train_model
+from mol_gen.training.string_lookup import (
+    get_selfies_string_lookup_layer,
+    write_string_lookup_to_json,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,17 +40,19 @@ def main():
     input_dir = Path(args.input)
     output_dir = Path(args.output)
 
-    train_dir = input_dir.joinpath("selfies", "train")
-    validate_dir = input_dir.joinpath("selfies", "validate")
-    token_counts_filepath = input_dir.joinpath("selfies", "token_counts.csv")
+    train_dir = input_dir / "selfies" / "train"
+    validate_dir = input_dir / "selfies" / "validate"
+    token_counts_filepath = input_dir / "selfies" / "token_counts.csv"
 
-    checkpoint_dir = output_dir.joinpath("checkpoints")
-    log_dir = output_dir.joinpath("logs")
+    string_lookup_filepath = output_dir / "string_lookup.json"
+    checkpoint_dir = output_dir / "checkpoints"
+    log_dir = output_dir / "logs"
 
     config = TrainingConfig.from_file(args.config)
 
     vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
     string_to_integer_layer = get_selfies_string_lookup_layer(vocabulary)
+    write_string_lookup_to_json(string_to_integer_layer, string_lookup_filepath)
 
     training_data = get_selfies_dataset(
         train_dir, config.dataset, string_to_integer_layer
