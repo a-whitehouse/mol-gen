@@ -17,7 +17,7 @@ dependencies:
   - pytest-mock
 
   # Python
-  - python=3.9
+  - python=3.10
 
   # Libraries
   - attrs
@@ -32,10 +32,11 @@ dependencies:
   - pyprojroot
   - rdkit
   - selfies
-  - tqdm
 
-  # src/mol_gen/
   - pip~=22.0
   - pip:
     - tensorflow-gpu==2.8
+    # Tensorflow - TypeError: Descriptors cannot not be created directly.
+    - protobuf~=3.19.0
+    # src/mol_gen/
     - -e .
