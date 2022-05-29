@@ -145,31 +145,47 @@ class MoleculeGenerator:
         Returns:
             list[str]: Generated molecules.
         """
+        # Model requires mask token at start of molecules
         mols = np.zeros(n_molecules).reshape(-1, 1)
+
+        # Use separate arrays for complete and incomplete molecules
         complete_mols = np.empty((0, 0))
 
         while len(mols):
+            # Take predicted logits for final characters in sequences
             pred_logits = self.model.predict(mols)[:, -1, :]
+
+            # Don't allow unknown token to be selected
             pred_logits = (pred_logits / temperature) + self.prediction_mask
 
             # Don't allow mask token to be applied immediately after starting token
             if mols.shape[1] == 1:
                 pred_logits += self.prediction_mask_initial
 
+            # Make weighted random selection of tokens using predicted logits
             pred_tokens = tf.random.categorical(pred_logits, 1)
+
+            # Append selected tokens to the end of molecules
             mols = np.hstack((mols, pred_tokens))
 
+            # Remove molecules that have a mask token as the final predicted token
             new_mols = mols[mols[:, -1] == 0]
             mols = mols[mols[:, -1] != 0]
 
+            # Pad completed molecules to the same shape so all can be stored in array
             complete_mols = np.pad(
                 complete_mols, ((0, 0), (0, new_mols.shape[1] - complete_mols.shape[1]))
             )
 
+            # Only add to completed molecules if new completed molecules present
             if len(new_mols):
                 complete_mols = np.append(complete_mols, new_mols, axis=0)
 
+        # Get corresponding SELFIES tokens from integers
         mols = self.integer_to_string_layer(complete_mols)
+
+        # Concatenate SELFIES token elements for each molecule
         mols = tf.strings.reduce_join(mols, axis=1)
 
+        # Decode to string
         return [i.decode() for i in mols.numpy()[1:]]
