@@ -9,6 +9,7 @@ from mol_gen.utils import assign_to_split
 
 
 def validate_set_size(instance, attribute, value):
+    """Check set size is a number between 0 and 1."""
     if not isinstance(value, (float)) or (value <= 0) or (value >= 1):
         raise ConfigException(
             f"Size for {attribute.name} set should be a number between 0 and 1."
@@ -28,7 +29,7 @@ class SplitConfig:
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> SplitConfig:
-        """Parses split section of preprocessing config.
+        """Parse split section of preprocessing config.
 
         Args:
             config (dict[str, Any]): Section of config.
@@ -42,7 +43,7 @@ class SplitConfig:
         return cls(validate=config.get("validate"), test=config.get("test"))
 
     def apply(self) -> str:
-        """Selects set at random from train/validate/test.
+        """Select set at random from train/validate/test.
 
         Returns:
             str: Assigned set.

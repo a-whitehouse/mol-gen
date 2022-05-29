@@ -16,7 +16,7 @@ class TrainingConfig:
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> TrainingConfig:
-        """Parses training config.
+        """Parse training config.
 
         Args:
             config (dict[str, Any]): Config.
@@ -34,7 +34,7 @@ class TrainingConfig:
 
     @classmethod
     def from_file(cls, filepath: str) -> TrainingConfig:
-        """Parses preprocessing config from file.
+        """Parse preprocessing config from file.
 
         Args:
             filepath (str): Path to config.

@@ -12,7 +12,7 @@ from mol_gen.training.model import get_compiled_model, train_model
 
 
 def parse_args() -> argparse.Namespace:
-    """Parses command-line arguments."""
+    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Execute training on SELFIES.")
     parser.add_argument("--config", type=str, help="Path to training yaml config file.")
     parser.add_argument(
@@ -33,6 +33,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main():
+    """Run dataset preprocessing pipeline and model training on input SELFIES."""
     args = parse_args()
 
     input_dir = Path(args.input)

@@ -27,7 +27,7 @@ class ConvertConfig:
 
     @classmethod
     def parse_config(cls, config: list[str]) -> ConvertConfig:
-        """Parses convert methods section of preprocessing config.
+        """Parse convert methods section of preprocessing config.
 
         Args:
             config (list[str]): Section of config.
@@ -49,7 +49,7 @@ class ConvertConfig:
         return cls(methods=methods)
 
     def apply(self, mol: Mol) -> Mol:
-        """Applies convert methods to molecule.
+        """Apply convert methods to molecule.
 
         Args:
             mol (Mol): Molecule to convert.

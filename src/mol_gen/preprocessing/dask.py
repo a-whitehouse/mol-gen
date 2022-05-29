@@ -1,6 +1,7 @@
 from functools import wraps
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Callable
 
 import dask.dataframe as dd
 import pandas as pd
@@ -13,7 +14,18 @@ from mol_gen.preprocessing.preprocessor import MoleculePreprocessor
 from mol_gen.preprocessing.selfies import encode_smiles_as_selfies
 
 
-def run_with_distributed_client(func):
+def run_with_distributed_client(func: Callable) -> Callable:
+    """Wrap function to run using dask distributed client.
+
+    The URL to the dask dashboard is printed to screen.
+
+    Args:
+        func (Callable): Function to run in client.
+
+    Returns:
+        Callable: Wrapped function.
+    """
+
     @wraps(func)
     def wrapped_func(*args, **kwargs):
         print("Setting up dask client")
@@ -70,7 +82,7 @@ def apply_molecule_preprocessor_to_partition(
 def drop_duplicates_and_repartition_parquet(
     input_dir: Path, output_dir: Path, column: str
 ) -> None:
-    """Drops rows from dataframe with repeated values in given column and repartitions.
+    """Drop rows from dataframe with repeated values in given column and repartition.
 
     Args:
         input_dir (Path): Path to directory to read data as parquet.
@@ -85,7 +97,7 @@ def drop_duplicates_and_repartition_parquet(
 
 
 def create_selfies_from_smiles(input_dir: Path, output_dir: Path, column: str) -> None:
-    """Encodes SMILES strings as SELFIES.
+    """Encode SMILES strings as SELFIES.
 
     Args:
         input_dir (Path): Path to directory to read data as parquet.
@@ -101,7 +113,7 @@ def create_selfies_from_smiles(input_dir: Path, output_dir: Path, column: str) -
 def get_selfies_token_counts_from_parquet(
     input_dir: Path, output_dir: Path, column: str
 ) -> None:
-    """Gets counts of SELFIES tokens from strings in dataframe column.
+    """Get counts of SELFIES tokens from strings in dataframe column.
 
     Args:
         input_dir (Path): Path to directory to read data as parquet.
@@ -124,7 +136,7 @@ def get_selfies_token_counts_from_parquet(
 
 
 def get_selfies_tokens_from_partition(df: pd.DataFrame, column: str) -> pd.Series:
-    """Gets individual SELFIES tokens from strings in dataframe column.
+    """Get individual SELFIES tokens from strings in dataframe column.
 
     Args:
         df (pd.DataFrame): SMILES string of molecules to preprocess.
@@ -139,7 +151,7 @@ def get_selfies_tokens_from_partition(df: pd.DataFrame, column: str) -> pd.Serie
 def create_splits_from_parquet(
     input_dir: Path, output_dir: Path, config: SplitConfig
 ) -> None:
-    """Splits dataframe by row to separate train/validate/test sets.
+    """Split dataframe by row to separate train/validate/test sets.
 
     Created sets are written in the corresponding subdirectory as text files.
 

@@ -17,7 +17,7 @@ class ModelConfig:
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> ModelConfig:
-        """Parses model section of training config.
+        """Parse model section of training config.
 
         Args:
             config (list[str]): Section of config.

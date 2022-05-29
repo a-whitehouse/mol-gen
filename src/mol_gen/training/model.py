@@ -51,7 +51,7 @@ def get_compiled_model(
     config: ModelConfig,
     vocab_size: int,
 ) -> keras.Model:
-    """Gets compiled model.
+    """Get compiled model.
 
     Args:
         config (ModelConfig): Config with hyperparameters for model layers.
@@ -100,7 +100,7 @@ class MoleculeGenerator:
     def from_files(
         cls, model_filepath: str, token_counts_filepath: str
     ) -> MoleculeGenerator:
-        """Loads molecule generator from files.
+        """Load molecule generator from files.
 
         Args:
             model_filepath (str): Path to model checkpoint.
@@ -120,7 +120,7 @@ class MoleculeGenerator:
         return cls(model, string_to_integer_layer, integer_to_string_layer)
 
     def _get_prediction_mask(self, mask_tokens: list[str]) -> EagerTensor:
-        """Gets prediction mask for logits.
+        """Get prediction mask for logits.
 
         Args:
             mask_tokens (list[str]): Tokens to mask.
@@ -136,7 +136,7 @@ class MoleculeGenerator:
         return tf.sparse.to_dense(sparse_mask)
 
     def generate_molecules(self, n_molecules: int, temperature: float = 1) -> list[str]:
-        """Generates molecules encoded as SELFIES.
+        """Generate molecules encoded as SELFIES.
 
         Args:
             n_molecules (int): Number of molecules to generate.

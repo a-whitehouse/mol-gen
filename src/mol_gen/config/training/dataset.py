@@ -14,7 +14,7 @@ class DatasetConfig:
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> DatasetConfig:
-        """Parses dataset section of training config.
+        """Parse dataset section of training config.
 
         Args:
             config (list[str]): Section of config.

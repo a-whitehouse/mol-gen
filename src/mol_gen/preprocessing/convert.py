@@ -8,7 +8,7 @@ UNCHARGER = Uncharger()
 
 
 def neutralise_salts(mol: Mol) -> Mol:
-    """Removes counterions and neutralises charges of molecule.
+    """Remove counterions and neutralise charges of molecule.
 
     Args:
         mol (Mol): Molecule to convert.
@@ -29,7 +29,7 @@ def neutralise_salts(mol: Mol) -> Mol:
 
 
 def remove_fragments(mol: Mol) -> Mol:
-    """Keeps only the largest fragment from a molecule.
+    """Keep only the largest fragment from a molecule.
 
     Example:
         ClCCl.c1ccccc1 -> c1ccccc1
@@ -46,7 +46,7 @@ def remove_fragments(mol: Mol) -> Mol:
 
 
 def remove_isotopes(mol: Mol) -> Mol:
-    """Removes isotopic labels from molecule.
+    """Remove isotopic labels from molecule.
 
     Example:
         CC(C)C(C(=O)O)[15N] -> CC(C)C(C(=O)O)[N]
@@ -64,7 +64,7 @@ def remove_isotopes(mol: Mol) -> Mol:
 
 
 def remove_stereochemistry(mol: Mol) -> Mol:
-    """Removes chiral tags from molecule.
+    """Remove chiral tags from molecule.
 
     Example:
         CC(C)[C@@H](C(=O)O)N -> CC(C)C(C(=O)O)N

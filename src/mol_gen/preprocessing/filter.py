@@ -1,10 +1,10 @@
-from typing import Callable, Optional, Union
+from typing import Callable
 
 from rdkit.Chem import Crippen, Lipinski, Mol, rdMolDescriptors
 
 from mol_gen.exceptions import FilterException, UndesirableMolecule
 
-DESCRIPTOR_TO_FUNCTION: dict[str, Callable[[Mol], Union[int, float]]] = {
+DESCRIPTOR_TO_FUNCTION: dict[str, Callable[[Mol], int | float]] = {
     "hydrogen_bond_acceptors": Lipinski.NumHAcceptors,
     "hydrogen_bond_donors": Lipinski.NumHDonors,
     "molar_refractivity": Crippen.MolMR,
@@ -16,7 +16,7 @@ DESCRIPTOR_TO_FUNCTION: dict[str, Callable[[Mol], Union[int, float]]] = {
 
 
 def check_only_allowed_elements_present(mol: Mol, allowed_elements: list[str]) -> None:
-    """Checks if the atoms in a molecule only correspond to allowed elements.
+    """Check if the atoms in a molecule only correspond to allowed elements.
 
     Args:
         mol (Mol): Molecule to check.
@@ -34,18 +34,18 @@ def check_only_allowed_elements_present(mol: Mol, allowed_elements: list[str]) -
 def check_descriptor_within_range(
     mol: Mol,
     descriptor: str,
-    min: Optional[Union[int, float]] = None,
-    max: Optional[Union[int, float]] = None,
+    min: int | float | None = None,
+    max: int | float | None = None,
 ) -> None:
-    """Calculates descriptor of molecule and compares to allowed min and max values.
+    """Calculate descriptor of molecule and compare to allowed min and max values.
 
     Implemented descriptor names are defined in DESCRIPTOR_TO_FUNCTION.
 
     Args:
         descriptor (str): Name of descriptor to calculate.
         mol (Mol): Molecule to calculate descriptor with.
-        min (Optional[float], optional): Minimum allowed value. Defaults to None.
-        max (Optional[float], optional): Maximum allowed value. Defaults to None.
+        min (int | float | None, optional): Minimum allowed value. Defaults to None.
+        max (int | float | None, optional): Maximum allowed value. Defaults to None.
 
     Raises:
         FilterException: If descriptor to calculate is unrecognised.
@@ -66,16 +66,16 @@ def check_descriptor_within_range(
 
 
 def check_value_within_range(
-    val: Union[int, float],
-    min: Optional[Union[int, float]] = None,
-    max: Optional[Union[int, float]] = None,
+    val: int | float,
+    min: int | float | None = None,
+    max: int | float | None = None,
 ):
-    """Checks if value is within the allowed min and max values.
+    """Check if value is within the allowed min and max values.
 
     Args:
-        val (Union[int, float]): Value to compare.
-        min (Optional[float], optional): Minimum allowed value. Defaults to None.
-        max (Optional[float], optional): Maximum allowed value. Defaults to None.
+        val (int | float): Value to compare.
+        min (int | float | None, optional): Minimum allowed value. Defaults to None.
+        max (int | float | None, optional): Maximum allowed value. Defaults to None.
 
     Raises:
         UndesirableMolecule: If descriptor is outside the allowed range of values.

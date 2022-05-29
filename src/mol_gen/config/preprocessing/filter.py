@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+from typing import Any
 
 from attrs import field, frozen
 from rdkit.Chem import GetPeriodicTable, Mol
@@ -20,7 +20,7 @@ class FilterConfig:
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> FilterConfig:
-        """Parses filter section of preprocessing config.
+        """Parse filter section of preprocessing config.
 
         Args:
             config (dict[str, Any]): Section of config.
@@ -42,7 +42,7 @@ class FilterConfig:
         )
 
     def apply(self, mol: Mol) -> None:
-        """Applies elements and range filter methods to molecule.
+        """Apply elements and range filter methods to molecule.
 
         Args:
             mol (Mol): Molecule to check.
@@ -73,7 +73,7 @@ class ElementsFilter:
 
     @classmethod
     def parse_config(cls, config: list[str]) -> ElementsFilter:
-        """Parses allowed_elements section of preprocessing config.
+        """Parse allowed_elements section of preprocessing config.
 
         Args:
             config (list[str]): Section of config.
@@ -87,7 +87,7 @@ class ElementsFilter:
         return cls(config)
 
     def apply(self, mol: Mol) -> None:
-        """Applies filter method to molecule.
+        """Apply filter method to molecule.
 
         Checks whether atoms of the molecule only correspond to allowed elements.
 
@@ -103,8 +103,8 @@ class ElementsFilter:
 @frozen
 class RangeFilter:
     descriptor: str = field()
-    min: Optional[Union[int, float]] = field(default=None)
-    max: Optional[Union[int, float]] = field(default=None)
+    min: int | float | None = field(default=None)
+    max: int | float | None = field(default=None)
 
     @descriptor.validator
     def _check_descriptor(self, attribute, value):
@@ -127,7 +127,7 @@ class RangeFilter:
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> RangeFilter:
-        """Parses range filter in range_filters section of preprocessing config.
+        """Parse range filter in range_filters section of preprocessing config.
 
         Args:
             config (list[str]): Section of config.
@@ -147,7 +147,7 @@ class RangeFilter:
         )
 
     def apply(self, mol: Mol) -> None:
-        """Applies filter method to molecule.
+        """Apply filter method to molecule.
 
         Calculates descriptor of molecule and compares to allowed min and max values.
 

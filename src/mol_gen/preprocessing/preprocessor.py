@@ -45,7 +45,7 @@ class MoleculePreprocessor:
         return MolToSmiles(mol)
 
     def _parse_smiles(self, smiles: str) -> Mol:
-        """Parses SMILES string to RDKit molecule.
+        """Parse SMILES string to RDKit molecule.
 
         Args:
             smiles (str): SMILES string

@@ -14,7 +14,7 @@ from mol_gen.preprocessing.dask import (
 
 
 def parse_args() -> argparse.Namespace:
-    """Parses command-line arguments."""
+    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Apply preprocessing steps to SMILES strings."
     )
@@ -47,7 +47,7 @@ def run_smiles_preprocessing(
     config_path: Path,
     column: str,
 ) -> None:
-    """Runs preprocessing methods and filters on input SMILES strings.
+    """Run preprocessing methods and filters on input SMILES strings.
 
     Args:
         input_dir (Path): Path to directory to read data as parquet.
@@ -72,7 +72,7 @@ def run_selfies_preprocessing(
     config_path: Path,
     column: str,
 ) -> None:
-    """Encodes SMILES strings as SELFIES, calculates token counts and splits data.
+    """Encode SMILES strings as SELFIES, calculate token counts and split data.
 
     Args:
         input_dir (Path): Path to directory to read data as parquet.
@@ -95,6 +95,7 @@ def run_selfies_preprocessing(
 
 
 def main():
+    """Run preprocessing methods and filters on input SMILES strings."""
     args = parse_args()
 
     input_dir = Path(args.input)

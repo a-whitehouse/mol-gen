@@ -8,7 +8,7 @@ from mol_gen.exceptions import ConfigException
 
 
 def assign_to_split(validate_size: float, test_size: float) -> str:
-    """Selects set at random from train/validate/test.
+    """Select set at random from train/validate/test.
 
     Args:
         validate_size (float): Validation set proportion.
@@ -31,7 +31,7 @@ def assign_to_split(validate_size: float, test_size: float) -> str:
 
 
 def check_smiles_equivalent_to_molecule(mol: Mol, smiles: str) -> None:
-    """Checks if the SMILES string and molecule are equivalent.
+    """Check if the SMILES string and molecule are equivalent.
 
     Args:
         mol (Mol): Molecule to compare.
@@ -47,7 +47,7 @@ def check_smiles_equivalent_to_molecule(mol: Mol, smiles: str) -> None:
 
 
 def read_yaml_config_file(filepath: str) -> dict[str, Any]:
-    """Reads yaml config from file.
+    """Read yaml config from file.
 
     Args:
         filepath (str): Path to config.

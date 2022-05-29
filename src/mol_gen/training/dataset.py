@@ -9,7 +9,7 @@ from mol_gen.config.training.dataset import DatasetConfig
 
 
 def add_start_and_end_of_sequence_tokens_to_selfies(selfies: tf.Tensor) -> tf.Tensor:
-    """Adds start- and end-of-sequence tokens to SELFIES.
+    """Add start- and end-of-sequence tokens to SELFIES.
 
     The null token '[nop]' is used as it is ignored by the selfies encoder.
 
@@ -47,7 +47,7 @@ def get_selfies_string_lookup_layer(
 def get_selfies_dataset(
     input_dir: Path, config: DatasetConfig, string_lookup_layer: StringLookup
 ) -> PrefetchDataset:
-    """Reads all files from the directory into a TensorFlow dataset with pipeline.
+    """Read all files from the directory into a TensorFlow dataset with pipeline.
 
     Args:
         input_dir (Path): Path to directory to read data as text.
@@ -73,7 +73,7 @@ def process_selfies_dataset(
     batch_size: int,
     string_lookup_layer: StringLookup,
 ) -> PrefetchDataset:
-    """Processes SELFIES dataset for training of model.
+    """Process SELFIES dataset for training of model.
 
     Args:
         dataset (tf.data.Dataset): Dataset of SELFIES.
@@ -96,7 +96,7 @@ def process_selfies_dataset(
 
 
 def split_selfies(selfies: tf.Tensor) -> tf.Tensor:
-    """Splits SELFIES into individual tokens.
+    """Split SELFIES into individual tokens.
 
     Args:
         selfies (tf.Tensor): SELFIES to split.
@@ -111,7 +111,7 @@ def split_selfies(selfies: tf.Tensor) -> tf.Tensor:
 def split_sequence_to_input_and_target(
     sequence: tf.Tensor,
 ) -> tuple[tf.Tensor, tf.Tensor]:
-    """Splits sequence to input and target sequences.
+    """Split sequence to input and target sequences.
 
     The target sequence is shifted by one element relative to the input sequence.
     Both sequences are one element shorter than the original sequence.
