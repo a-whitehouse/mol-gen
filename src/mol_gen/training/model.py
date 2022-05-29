@@ -11,16 +11,18 @@ from mol_gen.config.training.model import ModelConfig
 
 
 def train_model(
-    output_dir: Path,
+    checkpoint_dir: Path | str,
+    log_dir: Path | str,
     model: keras.Model,
     training_data: TextLineDataset,
     validation_data: TextLineDataset,
     config: ModelConfig,
 ) -> None:
-    """Trains model on training data.
+    """Train model on training data.
 
     Args:
-        output_dir (Path): Path to directory to save trained models and logs.
+        checkpoint_dir (Path | str): Path to directory to save trained models.
+        log_dir (Path | str):  Path to directory to write logs.
         model (keras.Model): Model to train.
         training_data (TextLineDataset): Data to train model.
         validation_data (TextLineDataset): Data to determine early stopping.
@@ -31,9 +33,9 @@ def train_model(
             patience=config.patience,
         ),
         tf.keras.callbacks.ModelCheckpoint(
-            filepath=str(output_dir.joinpath("checkpoints", "model.{epoch:02d}.h5"))
+            filepath=str(Path(checkpoint_dir) / "model.{epoch:02d}.h5")
         ),
-        tf.keras.callbacks.TensorBoard(log_dir=str(output_dir.joinpath("logs"))),
+        tf.keras.callbacks.TensorBoard(log_dir=log_dir),
     ]
     model.fit(
         training_data,

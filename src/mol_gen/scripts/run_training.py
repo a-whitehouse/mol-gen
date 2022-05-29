@@ -43,6 +43,9 @@ def main():
     validate_dir = input_dir.joinpath("selfies", "validate")
     token_counts_filepath = input_dir.joinpath("selfies", "token_counts.csv")
 
+    checkpoint_dir = output_dir.joinpath("checkpoints")
+    log_dir = output_dir.joinpath("logs")
+
     config = TrainingConfig.from_file(args.config)
 
     vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
@@ -57,7 +60,9 @@ def main():
 
     vocab_size = string_to_integer_layer.vocabulary_size()
     model = get_compiled_model(config.model, vocab_size)
-    train_model(output_dir, model, training_data, validation_data, config.model)
+    train_model(
+        checkpoint_dir, log_dir, model, training_data, validation_data, config.model
+    )
 
 
 if __name__ == "__main__":
