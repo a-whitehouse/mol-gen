@@ -11,7 +11,6 @@ from mol_gen.config.training.dataset import DatasetConfig
 from mol_gen.training.dataset import (
     add_start_and_end_of_sequence_tokens_to_selfies,
     get_selfies_dataset,
-    get_selfies_string_lookup_layer,
     process_selfies_dataset,
     split_selfies,
     split_sequence_to_input_and_target,
@@ -93,56 +92,6 @@ class TestAddStartAndEndOfSequenceTokensToSelfies:
         assert actual == tf.constant(
             "[nop][C][C][N][Branch1][P][C][=Branch1][C][=O][nop]"
         )
-
-
-class TestGetSelfiesStringLookupLayer:
-    def test_completes_given_valid_input(self, vocabulary):
-        get_selfies_string_lookup_layer(vocabulary)
-
-    def test_adds_vocabulary_to_layer_vocabulary(self, vocabulary):
-        layer = get_selfies_string_lookup_layer(vocabulary)
-
-        actual = layer.get_vocabulary()
-
-        assert actual[2:] == [
-            "[#Branch1]",
-            "[#Branch2]",
-            "[#C]",
-            "[#N]",
-            "[=Branch1]",
-            "[=Branch2]",
-            "[=C]",
-            "[=N]",
-            "[=O]",
-            "[=Ring1]",
-            "[=Ring2]",
-            "[Branch1]",
-            "[Branch2]",
-            "[C]",
-            "[Cl]",
-            "[NH1]",
-            "[N]",
-            "[O]",
-            "[P]",
-            "[Ring1]",
-            "[Ring2]",
-            "[S]",
-        ]
-
-    def test_adds_mask_token_to_layer_vocabulary(self, vocabulary):
-        layer = get_selfies_string_lookup_layer(vocabulary)
-
-        actual = layer.get_vocabulary()
-
-        assert actual[0] == "[nop]"
-
-    def test_ignores_extra_mask_token_in_vocabulary(self, vocabulary):
-        vocabulary.append("[nop]")
-        layer = get_selfies_string_lookup_layer(vocabulary)
-
-        actual = layer.get_vocabulary()
-
-        assert "[nop]" not in actual[1:]
 
 
 class TestGetSelfiesDataset:

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 from tensorflow.python.framework.ops import EagerTensor
 
-from mol_gen.training.dataset import get_selfies_string_lookup_layer
+from mol_gen.training.string_lookup import read_string_lookup_from_json
 
 
 class MoleculeGenerator:
@@ -22,23 +23,24 @@ class MoleculeGenerator:
 
     @classmethod
     def from_files(
-        cls, model_filepath: str, token_counts_filepath: str
+        cls, model_filepath: Path | str, string_lookup_config_filepath: Path | str
     ) -> MoleculeGenerator:
         """Load molecule generator from files.
 
         Args:
-            model_filepath (str): Path to model checkpoint.
-            token_counts_filepath (str): Path to token counts.
+            model_filepath (Path | str): Path to model checkpoint.
+            string_lookup_config_filepath (Path | str): Path to string lookup config.
 
         Returns:
             MoleculeGenerator: Molecule generator.
         """
         model = tf.keras.models.load_model(model_filepath)
 
-        vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
-        string_to_integer_layer = get_selfies_string_lookup_layer(vocabulary)
-        integer_to_string_layer = get_selfies_string_lookup_layer(
-            vocabulary, invert=True
+        string_to_integer_layer = read_string_lookup_from_json(
+            string_lookup_config_filepath
+        )
+        integer_to_string_layer = read_string_lookup_from_json(
+            string_lookup_config_filepath, invert=True
         )
 
         return cls(model, string_to_integer_layer, integer_to_string_layer)

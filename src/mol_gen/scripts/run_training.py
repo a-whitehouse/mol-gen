@@ -2,13 +2,16 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+from pyprojroot import here
 
 from mol_gen.config.training import TrainingConfig
-from mol_gen.training.dataset import (
-    get_selfies_dataset,
-    get_selfies_string_lookup_layer,
-)
+from mol_gen.training.dataset import get_selfies_dataset
+from mol_gen.training.evaluate import create_model_evaluation_report
 from mol_gen.training.model import get_compiled_model, train_model
+from mol_gen.training.string_lookup import (
+    get_selfies_string_lookup_layer,
+    write_string_lookup_to_json,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,14 +42,24 @@ def main():
     input_dir = Path(args.input)
     output_dir = Path(args.output)
 
-    train_dir = input_dir.joinpath("selfies", "train")
-    validate_dir = input_dir.joinpath("selfies", "validate")
-    token_counts_filepath = input_dir.joinpath("selfies", "token_counts.csv")
+    train_dir = input_dir / "selfies" / "train"
+    validate_dir = input_dir / "selfies" / "validate"
+    token_counts_filepath = input_dir / "selfies" / "token_counts.csv"
+
+    string_lookup_filepath = output_dir / "string_lookup.json"
+    checkpoint_dir = output_dir / "checkpoints"
+    log_dir = output_dir / "logs"
+    html_report_filepath = output_dir / "model_evaluation_report.html"
+
+    report_template_filepath = (
+        here() / "notebooks" / "templates" / "model_evaluation_report.ipynb"
+    )
 
     config = TrainingConfig.from_file(args.config)
 
     vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
     string_to_integer_layer = get_selfies_string_lookup_layer(vocabulary)
+    write_string_lookup_to_json(string_to_integer_layer, string_lookup_filepath)
 
     training_data = get_selfies_dataset(
         train_dir, config.dataset, string_to_integer_layer
@@ -57,7 +70,17 @@ def main():
 
     vocab_size = string_to_integer_layer.vocabulary_size()
     model = get_compiled_model(config.model, vocab_size)
-    train_model(output_dir, model, training_data, validation_data, config.model)
+    train_model(
+        checkpoint_dir, log_dir, model, training_data, validation_data, config.model
+    )
+
+    create_model_evaluation_report(
+        report_template_filepath,
+        html_report_filepath,
+        checkpoint_dir,
+        train_dir,
+        string_lookup_filepath,
+    )
 
 
 if __name__ == "__main__":
