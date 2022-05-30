@@ -2,9 +2,11 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+from pyprojroot import here
 
 from mol_gen.config.training import TrainingConfig
 from mol_gen.training.dataset import get_selfies_dataset
+from mol_gen.training.evaluate import create_model_evaluation_report
 from mol_gen.training.model import get_compiled_model, train_model
 from mol_gen.training.string_lookup import (
     get_selfies_string_lookup_layer,
@@ -47,6 +49,11 @@ def main():
     string_lookup_filepath = output_dir / "string_lookup.json"
     checkpoint_dir = output_dir / "checkpoints"
     log_dir = output_dir / "logs"
+    html_report_filepath = output_dir / "model_evaluation_report.html"
+
+    report_template_filepath = (
+        here() / "notebooks" / "templates" / "model_evaluation_report.ipynb"
+    )
 
     config = TrainingConfig.from_file(args.config)
 
@@ -65,6 +72,14 @@ def main():
     model = get_compiled_model(config.model, vocab_size)
     train_model(
         checkpoint_dir, log_dir, model, training_data, validation_data, config.model
+    )
+
+    create_model_evaluation_report(
+        report_template_filepath,
+        html_report_filepath,
+        checkpoint_dir,
+        train_dir,
+        string_lookup_filepath,
     )
 
 
