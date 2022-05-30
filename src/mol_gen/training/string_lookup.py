@@ -36,7 +36,7 @@ def read_string_lookup_from_json(filepath: Path | str, invert: bool = False) -> 
     with open(filepath) as fh:
         config = json.load(fh)
 
-    config[invert] = invert
+    config["invert"] = invert
 
     return StringLookup.from_config(config)
 
