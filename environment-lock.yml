@@ -162,7 +162,7 @@ dependencies:
   - pcre=8.45=h0e60522_0
   - pickleshare=0.7.5=py_1003
   - pillow=9.1.1=py310h767b3fd_0
-  - pip=22.1.1=pyhd8ed1ab_0
+  - pip=22.1.2=pyhd8ed1ab_0
   - pixman=0.40.0=h8ffe710_0
   - platformdirs=2.5.1=pyhd8ed1ab_0
   - pluggy=1.0.0=py310h5588dad_3
