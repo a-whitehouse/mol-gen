@@ -114,4 +114,12 @@ class MoleculeGenerator:
         mols = tf.strings.reduce_join(mols, axis=1)
 
         # Decode to string
-        return [i.decode() for i in mols.numpy()[1:]]
+        mols = [i.decode() for i in mols.numpy()[1:]]
+
+        # Remove mask tokens
+        mols = [
+            i.replace(self.integer_to_string_layer(0).numpy().decode(), "")
+            for i in mols
+        ]
+
+        return mols
