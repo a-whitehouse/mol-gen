@@ -1,6 +1,6 @@
-import argparse
 from pathlib import Path
 
+import click
 import pandas as pd
 from pyprojroot import here
 
@@ -14,33 +14,23 @@ from mol_gen.training.string_lookup import (
 )
 
 
-def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Execute training on SELFIES.")
-    parser.add_argument("--config", type=str, help="Path to training yaml config file.")
-    parser.add_argument(
-        "--input",
-        type=str,
-        help="""Path to directory created by preprocessing script,
+@click.command("train")
+@click.option("--config", type=click.STRING, help="Path to training yaml config file.")
+@click.option(
+    "--input",
+    type=click.STRING,
+    help="""Path to directory created by preprocessing script,
         containing 'selfies' directory with SELFIES text files and token counts.""",
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        help="Path to directory to write trained models.",
-    )
-
-    args = parser.parse_args()
-
-    return args
-
-
-def main():
-    """Run dataset preprocessing pipeline and model training on input SELFIES."""
-    args = parse_args()
-
-    input_dir = Path(args.input)
-    output_dir = Path(args.output)
+)
+@click.option(
+    "--output",
+    type=click.STRING,
+    help="Path to directory to write trained models.",
+)
+def run_training(config, input, output):
+    """Train and evaluate model checkpoints on preprocessed SELFIES."""
+    input_dir = Path(input)
+    output_dir = Path(output)
 
     train_dir = input_dir / "selfies" / "train"
     validate_dir = input_dir / "selfies" / "validate"
@@ -55,7 +45,7 @@ def main():
         here() / "notebooks" / "templates" / "model_evaluation_report.ipynb"
     )
 
-    config = TrainingConfig.from_file(args.config)
+    config = TrainingConfig.from_file(config)
 
     vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
     string_to_integer_layer = get_selfies_string_lookup_layer(vocabulary)
@@ -81,7 +71,3 @@ def main():
         train_dir,
         string_lookup_filepath,
     )
-
-
-if __name__ == "__main__":
-    main()
