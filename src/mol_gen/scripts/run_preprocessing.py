@@ -1,6 +1,7 @@
-import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+import click
 
 from mol_gen.config.preprocessing import PreprocessingConfig
 from mol_gen.preprocessing.dask import (
@@ -11,34 +12,6 @@ from mol_gen.preprocessing.dask import (
     get_selfies_token_counts_from_parquet,
     run_with_distributed_client,
 )
-
-
-def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Apply preprocessing steps to SMILES strings."
-    )
-    parser.add_argument(
-        "--config", type=str, help="Path to preprocessing yaml config file."
-    )
-    parser.add_argument(
-        "--input", type=str, help="Path to directory containing SMILES strings."
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        help="Path to directory to write preprocessed SMILES strings.",
-    )
-    parser.add_argument(
-        "--column",
-        type=str,
-        help="Name of column containing SMILES strings.",
-        default="SMILES",
-    )
-
-    args = parser.parse_args()
-
-    return args
 
 
 def run_smiles_preprocessing(
@@ -94,19 +67,35 @@ def run_selfies_preprocessing(
         create_splits_from_parquet(temp_dir, output_dir, config.split)
 
 
-def main():
+@click.command("preprocess")
+@click.option(
+    "--config", type=click.STRING, help="Path to preprocessing yaml config file."
+)
+@click.option(
+    "--input", type=click.STRING, help="Path to directory containing SMILES strings."
+)
+@click.option(
+    "--output",
+    type=click.STRING,
+    help="Path to directory to write preprocessed SMILES strings.",
+)
+@click.option(
+    "--column",
+    type=click.STRING,
+    help="Name of column containing SMILES strings.",
+    default="SMILES",
+)
+def run_preprocessing(config, input, output, column):
     """Run preprocessing methods and filters on input SMILES strings."""
-    args = parse_args()
-
-    input_dir = Path(args.input)
-    output_dir = Path(args.output)
-    config_path = Path(args.config)
+    input_dir = Path(input)
+    output_dir = Path(output)
+    config_path = Path(config)
 
     smiles_dir = output_dir / "smiles"
     selfies_dir = output_dir / "selfies"
 
     if not smiles_dir.exists():
-        run_smiles_preprocessing(input_dir, smiles_dir, config_path, args.column)
+        run_smiles_preprocessing(input_dir, smiles_dir, config_path, column)
 
     else:
         print(
@@ -122,7 +111,3 @@ def main():
             "Skipping preprocessing of SELFIES\n"
             "SELFIES directory already exists in output directory"
         )
-
-
-if __name__ == "__main__":
-    main()
