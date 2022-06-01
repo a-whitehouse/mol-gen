@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
 
+from mol_gen.molecule_generation.molecule_generator import MoleculeGenerator
+
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -35,7 +37,14 @@ def run_molecule_generation(
         output_dir (Path): Path to file to write generated molecules.
         n_mols (int): Number of molecules to generate.
     """
-    pass
+    output_path.parent.mkdir(exist_ok=True, parents=True)
+
+    mol_generator = MoleculeGenerator.from_files(model_path, vocab_path)
+    mols = mol_generator.generate_molecules(n_mols)
+
+    with open(output_path, "w") as fh:
+        for mol in mols:
+            fh.write(f"{mol}\n")
 
 
 def main():
