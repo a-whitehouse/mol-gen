@@ -1,6 +1,8 @@
 from typing import Callable
 
-from rdkit.Chem import Crippen, Lipinski, Mol, rdMolDescriptors
+from rdkit.Chem import AllChem, Crippen, Lipinski, Mol, rdMolDescriptors
+from rdkit.DataStructs import TanimotoSimilarity
+from rdkit.DataStructs.cDataStructs import UIntSparseIntVect
 
 from mol_gen.exceptions import FilterException, UndesirableMolecule
 
@@ -86,4 +88,26 @@ def check_value_within_range(
     if (max is not None) and (max < val):
         raise UndesirableMolecule(
             f"Value {val} greater than maximum allowed value {max}."
+        )
+
+
+def check_tanimoto_score_above_threshold(
+    mol: Mol, fingerprint: UIntSparseIntVect, min: int | float
+):
+    """Compare molecule to Morgan fingerprint by Tanimoto scoring.
+
+    Args:
+        mol (Mol): Molecule to check.
+        fingerprint (UIntSparseIntVect): Morgan fingerprint to compare against.
+        min (int | float): Minimum allowed Tanimoto score.
+
+    Raises:
+        UndesirableMolecule: If Tanimoto score is less than the minimum allowed value.
+    """
+    fp2 = AllChem.GetMorganFingerprint(mol, 2)
+    score = TanimotoSimilarity(fingerprint, fp2)
+
+    if score < min:
+        raise UndesirableMolecule(
+            f"Tanimoto score {score} less than minimum allowed value {min}."
         )
