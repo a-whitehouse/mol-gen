@@ -1,11 +1,12 @@
 import pytest
-from rdkit.Chem import MolFromSmiles
+from rdkit.Chem import AllChem, MolFromSmiles
 
 from mol_gen.exceptions import FilterException, UndesirableMolecule
 from mol_gen.preprocessing import filter
 from mol_gen.preprocessing.filter import (
     check_descriptor_within_range,
     check_only_allowed_elements_present,
+    check_tanimoto_score_above_threshold,
     check_value_within_range,
 )
 
@@ -118,3 +119,18 @@ class TestCheckValueWithinRange:
             check_value_within_range(6.1, max=6)
 
         assert str(excinfo.value) == "Value 6.1 greater than maximum allowed value 6."
+
+
+class TestCheckTanimotoScoreAboveThreshold:
+    @pytest.fixture
+    def fingerprint(self):
+        return AllChem.GetMorganFingerprint(MolFromSmiles("CN1CCN(Cc2ccccc2)CC1"), 2)
+
+    def test_raises_exception_given_insufficient_similarity(self, mol, fingerprint):
+        with pytest.raises(UndesirableMolecule) as excinfo:
+            check_tanimoto_score_above_threshold(mol, fingerprint, 1)
+
+        assert str(excinfo.value).endswith("less than minimum allowed value 1.")
+
+    def test_allows_molecule_given_sufficient_similarity(self, mol, fingerprint):
+        check_tanimoto_score_above_threshold(mol, fingerprint, 0.3)
