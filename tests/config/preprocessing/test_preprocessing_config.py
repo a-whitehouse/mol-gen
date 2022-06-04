@@ -17,6 +17,10 @@ class TestPreprocessingConfig:
                 "range_filters": {
                     "molecular_weight": {"min": 180, "max": 480},
                 },
+                "structure_filters": [
+                    {"smiles": "CC(=O)Nc1ccc(O)cc1", "min": 0.15},
+                    {"smiles": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O", "min": 0.1},
+                ],
             },
             "split": {"validate": 0.1, "test": 0.2},
         }
@@ -69,6 +73,10 @@ class TestPreprocessingConfig:
                 "range_filters": {
                     "molecular_weight": {"min": 180, "max": 480},
                 },
+                "structure_filters": [
+                    {"smiles": "CC(=O)Nc1ccc(O)cc1", "min": 0.15},
+                    {"smiles": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O", "min": 0.1},
+                ],
             }
         )
 

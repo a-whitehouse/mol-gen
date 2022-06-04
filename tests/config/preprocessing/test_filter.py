@@ -1,13 +1,15 @@
 from unittest.mock import call
 
 import pytest
-from rdkit.Chem import MolFromSmiles
+from rdkit.Chem import AllChem, MolFromSmiles
+from rdkit.DataStructs.cDataStructs import UIntSparseIntVect
 
 from mol_gen.config.preprocessing import filter
 from mol_gen.config.preprocessing.filter import (
     ElementsFilter,
     FilterConfig,
     RangeFilter,
+    StructureFilter,
 )
 from mol_gen.exceptions import ConfigException
 
@@ -29,6 +31,10 @@ class TestFilterConfig:
                 "partition_coefficient": {"min": -0.4},
                 "rotatable_bonds": {"max": 10},
             },
+            "structure_filters": [
+                {"smiles": "NC1=NNC(C2=CC(NC=C5)=C5C=C2)=C1C#N", "min": 0.35},
+                {"smiles": "CN1CCN(Cc2ccccc2)CC1", "min": 0.3},
+            ],
         }
 
     def test_parse_config_completes_given_valid_config_section(
@@ -75,7 +81,7 @@ class TestFilterConfig:
         assert range_filter.min == expected_min
         assert range_filter.max == expected_max
 
-    def test_parse_config_sets_expected_range_filters_as_empty_given_none_requested(
+    def test_parse_config_sets_range_filters_as_empty_given_none_requested(
         self,
     ):
         config = FilterConfig.parse_config(
@@ -85,6 +91,42 @@ class TestFilterConfig:
         )
 
         assert config.range_filters == {}
+
+    def test_parse_config_sets_expected_number_of_structure_filters_given_valid_config_section(
+        self, valid_config_section
+    ):
+        config = FilterConfig.parse_config(valid_config_section)
+        structure_filters = config.structure_filters
+
+        assert len(structure_filters) == 2
+
+    @pytest.mark.parametrize(
+        "element, expected_smiles, expected_min",
+        [
+            (0, "NC1=NNC(C2=CC(NC=C5)=C5C=C2)=C1C#N", 0.35),
+            (1, "CN1CCN(Cc2ccccc2)CC1", 0.3),
+        ],
+    )
+    def test_parse_config_sets_expected_structure_filter_given_valid_config_section(
+        self, valid_config_section, element, expected_smiles, expected_min
+    ):
+        config = FilterConfig.parse_config(valid_config_section)
+        structure_filter = config.structure_filters[element]
+
+        assert isinstance(structure_filter, StructureFilter)
+        assert structure_filter.smiles == expected_smiles
+        assert structure_filter.min == expected_min
+
+    def test_parse_config_sets_structure_filters_as_empty_given_none_requested(
+        self,
+    ):
+        config = FilterConfig.parse_config(
+            {
+                "allowed_elements": ["H", "C", "N", "O", "F", "S", "Cl", "Br"],
+            }
+        )
+
+        assert config.structure_filters == []
 
     def test_apply_completes_given_valid_config_section(
         self, valid_config_section, mol
@@ -120,6 +162,35 @@ class TestFilterConfig:
                 call(mol, "molecular_weight", min=180, max=480),
                 call(mol, "partition_coefficient", min=-0.4, max=None),
                 call(mol, "rotatable_bonds", min=None, max=10),
+            ]
+        )
+
+    def test_apply_calls_structure_filter_functions_as_expected(
+        self, mocker, valid_config_section, mol
+    ):
+        mock_filter_func = mocker.patch.object(
+            filter, "check_tanimoto_score_above_threshold"
+        )
+        config = FilterConfig.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+        mock_filter_func.assert_has_calls(
+            [
+                call(
+                    mol,
+                    AllChem.GetMorganFingerprint(
+                        MolFromSmiles("NC1=NNC(C2=CC(NC=C5)=C5C=C2)=C1C#N"), 2
+                    ),
+                    min=0.35,
+                ),
+                call(
+                    mol,
+                    AllChem.GetMorganFingerprint(
+                        MolFromSmiles("CN1CCN(Cc2ccccc2)CC1"), 2
+                    ),
+                    min=0.3,
+                ),
             ]
         )
 
@@ -266,4 +337,66 @@ class TestRangeFilter:
 
         mock_filter_func.assert_called_once_with(
             mol, "molecular_weight", min=180, max=480
+        )
+
+
+class TestStructureFilter:
+    @pytest.fixture
+    def valid_config_section(self):
+        return {"smiles": "CN1CCN(Cc2ccccc2)CC1", "min": 0.3}
+
+    def test_parse_config_completes_given_valid_config_section(
+        self, valid_config_section
+    ):
+        StructureFilter.parse_config(valid_config_section)
+
+    def test_parse_config_returns_expected_config_given_valid_config_section(
+        self, valid_config_section
+    ):
+        config = StructureFilter.parse_config(valid_config_section)
+
+        assert isinstance(config, StructureFilter)
+
+    def test_parse_config_sets_expected_attributes_given_valid_config_section(
+        self, valid_config_section
+    ):
+        config = StructureFilter.parse_config(valid_config_section)
+
+        assert config.smiles == "CN1CCN(Cc2ccccc2)CC1"
+        assert config.min == 0.3
+        assert isinstance(config.fingerprint, UIntSparseIntVect)
+
+    @pytest.mark.parametrize("value", [0, 1.1, "0.3"])
+    def test_parse_config_raises_exception_given_invalid_min_value(self, value):
+        with pytest.raises(ConfigException):
+            StructureFilter.parse_config(
+                {"smiles": "CN1CCN(Cc2ccccc2)CC1", "min": value}
+            )
+
+    @pytest.mark.parametrize("smiles", [None, "unrecognised"])
+    def test_parse_config_raises_exception_given_invalid_smiles(self, smiles):
+        with pytest.raises(ConfigException):
+            StructureFilter.parse_config({"smiles": smiles, "min": 0.3})
+
+    def test_apply_completes_given_valid_config_section(
+        self, valid_config_section, mol
+    ):
+        config = StructureFilter.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+    def test_apply_calls_filter_function_as_expected(
+        self, mocker, valid_config_section, mol
+    ):
+        mock_filter_func = mocker.patch.object(
+            filter, "check_tanimoto_score_above_threshold"
+        )
+        config = StructureFilter.parse_config(valid_config_section)
+
+        config.apply(mol)
+
+        mock_filter_func.assert_called_once_with(
+            mol,
+            AllChem.GetMorganFingerprint(MolFromSmiles("CN1CCN(Cc2ccccc2)CC1"), 2),
+            min=0.3,
         )
