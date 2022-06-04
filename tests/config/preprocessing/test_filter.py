@@ -366,12 +366,22 @@ class TestStructureFilter:
         assert config.min == 0.3
         assert isinstance(config.fingerprint, UIntSparseIntVect)
 
-    @pytest.mark.parametrize("value", [0, 1.1, "0.3"])
-    def test_parse_config_raises_exception_given_invalid_min_value(self, value):
-        with pytest.raises(ConfigException):
+    @pytest.mark.parametrize("value", [0, 1.1])
+    def test_parse_config_raises_exception_given_min_value_outside_range(self, value):
+        with pytest.raises(ConfigException) as excinfo:
             StructureFilter.parse_config(
                 {"smiles": "CN1CCN(Cc2ccccc2)CC1", "min": value}
             )
+        assert str(excinfo.value).endswith("is not within the interval (0, 1].")
+
+    @pytest.mark.parametrize("value", [None, "0.3"])
+    def test_parse_config_raises_exception_given_min_value_not_numeric(self, value):
+        with pytest.raises(ConfigException) as excinfo:
+            StructureFilter.parse_config(
+                {"smiles": "CN1CCN(Cc2ccccc2)CC1", "min": value}
+            )
+
+        assert str(excinfo.value).endswith("is not a number.")
 
     @pytest.mark.parametrize("smiles", [None, "unrecognised"])
     def test_parse_config_raises_exception_given_invalid_smiles(self, smiles):
