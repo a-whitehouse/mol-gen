@@ -4,6 +4,7 @@ from typing import Any
 
 from attrs import field, frozen
 from rdkit.Chem import AllChem, GetPeriodicTable, Mol, MolFromSmiles
+from rdkit.DataStructs.cDataStructs import UIntSparseIntVect
 
 from mol_gen.exceptions import ConfigException
 from mol_gen.preprocessing.filter import (
@@ -169,20 +170,11 @@ class RangeFilter:
         check_descriptor_within_range(mol, self.descriptor, min=self.min, max=self.max)
 
 
+@frozen
 class StructureFilter:
     smiles: str = field()
+    fingerprint: UIntSparseIntVect = field()
     min: int | float = field()
-
-    @smiles.validator
-    def _check_smiles(self, attribute, value):
-        try:
-            mol = MolFromSmiles(value)
-
-        except TypeError:
-            mol = None
-
-        if mol is None:
-            raise ConfigException(f"SMILES string {value} could not be parsed.")
 
     @min.validator
     def _check_min(self, attribute, value):
@@ -197,10 +189,6 @@ class StructureFilter:
                 "is not within the interval (0, 1]."
             )
 
-    def __attrs_post_init__(self):
-        mol = MolFromSmiles(self.smiles)
-        self._fp = AllChem.GetMorganFingerprint(mol, 2)
-
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> StructureFilter:
         """Parse structure filter in structure_filters section of preprocessing config.
@@ -214,9 +202,19 @@ class StructureFilter:
         Returns:
             StructureFilter: Class representing section of config.
         """
+        smiles = config.get("smiles")
+
+        try:
+            mol = MolFromSmiles(smiles)
+            fingerprint = AllChem.GetMorganFingerprint(mol, 2)
+
+        except Exception:
+            raise ConfigException(f"SMILES string {smiles} could not be parsed.")
+
         return cls(
-            smiles=config["smiles"],
-            min=config["min"],
+            smiles=smiles,
+            fingerprint=fingerprint,
+            min=config.get("min"),
         )
 
     def apply(self, mol: Mol) -> None:
@@ -230,4 +228,4 @@ class StructureFilter:
         Raises:
             UndesirableMolecule: If Tanimoto score less than the minimum allowed value.
         """
-        check_tanimoto_score_above_threshold(mol, self._fp, min=self.min)
+        check_tanimoto_score_above_threshold(mol, self.fingerprint, min=self.min)
