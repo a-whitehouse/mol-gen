@@ -20,6 +20,9 @@ def valid_config_section():
         "model": {
             "embedding_dim": 64,
             "lstm_units": 128,
+            "dropout": 0.5,
+            "patience": 5,
+            "epochs": 2,
         },
     }
 
@@ -38,6 +41,7 @@ class TestRunTraining:
     def test_completes_given_valid_input(self, tmpdir, input_path, config_path):
         run(
             [
+                "mol-gen",
                 "train",
                 "--input",
                 input_path,

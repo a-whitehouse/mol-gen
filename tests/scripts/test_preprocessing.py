@@ -42,6 +42,7 @@ class TestRunPreprocessing:
     ):
         run(
             [
+                "mol-gen",
                 "preprocess",
                 "--input",
                 input_path,

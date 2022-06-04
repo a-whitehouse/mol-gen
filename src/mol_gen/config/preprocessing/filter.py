@@ -3,13 +3,15 @@ from __future__ import annotations
 from typing import Any
 
 from attrs import field, frozen
-from rdkit.Chem import GetPeriodicTable, Mol
+from rdkit.Chem import AllChem, GetPeriodicTable, Mol, MolFromSmiles
+from rdkit.DataStructs.cDataStructs import UIntSparseIntVect
 
 from mol_gen.exceptions import ConfigException
 from mol_gen.preprocessing.filter import (
     DESCRIPTOR_TO_FUNCTION,
     check_descriptor_within_range,
     check_only_allowed_elements_present,
+    check_tanimoto_score_above_threshold,
 )
 
 
@@ -17,6 +19,7 @@ from mol_gen.preprocessing.filter import (
 class FilterConfig:
     elements_filter: ElementsFilter
     range_filters: list[RangeFilter]
+    structure_filters: list[StructureFilter]
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> FilterConfig:
@@ -39,6 +42,10 @@ class FilterConfig:
                 k: RangeFilter.parse_config({k: v})
                 for k, v in config.get("range_filters", {}).items()
             },
+            structure_filters=[
+                StructureFilter.parse_config(i)
+                for i in config.get("structure_filters", [])
+            ],
         )
 
     def apply(self, mol: Mol) -> None:
@@ -53,6 +60,9 @@ class FilterConfig:
         self.elements_filter.apply(mol)
 
         for filter in self.range_filters.values():
+            filter.apply(mol)
+
+        for filter in self.structure_filters:
             filter.apply(mol)
 
 
@@ -158,3 +168,64 @@ class RangeFilter:
             UndesirableMolecule: If descriptor is outside the allowed range of values.
         """
         check_descriptor_within_range(mol, self.descriptor, min=self.min, max=self.max)
+
+
+@frozen
+class StructureFilter:
+    smiles: str = field()
+    fingerprint: UIntSparseIntVect = field()
+    min: int | float = field()
+
+    @min.validator
+    def _check_min(self, attribute, value):
+        if not isinstance(value, (float, int)):
+            raise ConfigException(
+                f"Minimum structural similarity score {value} for {self.smiles} "
+                "is not a number."
+            )
+        elif not (0 < value <= 1):
+            raise ConfigException(
+                f"Minimum structural similarity score {value} for {self.smiles} "
+                "is not within the interval (0, 1]."
+            )
+
+    @classmethod
+    def parse_config(cls, config: dict[str, Any]) -> StructureFilter:
+        """Parse structure filter in structure_filters section of preprocessing config.
+
+        Args:
+            config (dict[str, Any]): Section of config.
+
+        Raises:
+            ConfigException: If the SMILES string cannot be parsed, or minimum invalid.
+
+        Returns:
+            StructureFilter: Class representing section of config.
+        """
+        smiles = config.get("smiles")
+
+        try:
+            mol = MolFromSmiles(smiles)
+            fingerprint = AllChem.GetMorganFingerprint(mol, 2)
+
+        except Exception:
+            raise ConfigException(f"SMILES string {smiles} could not be parsed.")
+
+        return cls(
+            smiles=smiles,
+            fingerprint=fingerprint,
+            min=config.get("min"),
+        )
+
+    def apply(self, mol: Mol) -> None:
+        """Apply structural similarity method to molecule.
+
+        Compares molecule to Morgan fingerprint by Tanimoto scoring.
+
+        Args:
+            mol (Mol): Molecule to check.
+
+        Raises:
+            UndesirableMolecule: If Tanimoto score less than the minimum allowed value.
+        """
+        check_tanimoto_score_above_threshold(mol, self.fingerprint, min=self.min)
