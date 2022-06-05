@@ -23,8 +23,8 @@ filter:
         - smiles: <SMILES string b>
           min: <numeric>
 split:
-    validate: 0.1
-    test: 0.1
+    validate: <numeric>
+    test: <numeric>
 ```
 
 An example config file can be found [here](examples/preprocessing.yml).
@@ -92,11 +92,23 @@ Example:
 ```
 
 Similarity is calculated by converting the SMILES string and the molecule being compared to Morgan fingerprints.
+The minimum Tanimoto similarity score should be a number in the interval (0, 1].
 
 
 **split**
 
-TODO
+Here you can specify the sizes of the validation and test splits.
+
+Example:
+```yaml
+split:
+    validate: 0.1
+    test: 0.1
+```
+
+The size of the train split will be determined automatically from the remainder of the validation and test splits.
+Hence, the total size of the validation and test splits should be less than 1.
+
 
 ## Training
 
