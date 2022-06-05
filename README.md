@@ -58,73 +58,7 @@ preprocess --config <path to config file> --input <path to directory containing 
 
 The input directory should contain csv files with a "SMILES" column containing SMILES strings of molecules.
 
-The config yml file should have the following structure:
-```yaml
-convert:
-    - <convert method a>
-    - <convert method b>
-filter:
-    allowed_elements: [H, C, N, ...]
-    range_filters:
-        <descriptor a>:
-            min: <numeric>
-            max: <numeric>
-        <descriptor b>:
-            min: <numeric>
-            max: <numeric>
-```
-
-An example config file can be found [here](examples/preprocessing.yml).
-
-### convert
-
-Here you can specify which conversion methods should be executed by the preprocessing step.
-
-Example:
-```yaml
-convert:
-    - neutralise_salts
-    - remove_stereochemistry
-```
-
-### filter
-
-**allowed_elements**
-
-Here you can specify the elements that molecules are allowed to have.
-If a molecule has an element that is not in this list, it will be filtered out.
-
-Example:
-```yaml
-    allowed_elements: [H, C, N, O, F, S, Cl, Br]
-```
-
-**range_filters**
-
-Here you can specify the allowed ranges of values for descriptors that molecules can have.
-Either a min or max value, or both, should be specified.
-
-Example:
-```yaml
-    range_filters:
-        hydrogen_bond_acceptors:
-            max: 10
-        hydrogen_bond_donors:
-            max: 5
-        molar_refractivity:
-            min: 40
-            max: 130
-        molecular_weight:
-            min: 180
-            max: 480
-        partition_coefficient:
-            min: -0.4
-            max: 5.6
-        rotatable_bonds:
-            max: 10
-        topological_polar_surface_area:
-            max: 140
-```
+The structure of the preprocessing config file is described in the [config docs](docs/config.md#preprocessing).
 
 ## Training
 
