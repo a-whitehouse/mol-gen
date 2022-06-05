@@ -4,6 +4,8 @@ from typing import Any
 
 from attrs import frozen
 
+from mol_gen.exceptions import ConfigException
+
 
 @frozen
 class EvaluateConfig:
@@ -17,10 +19,17 @@ class EvaluateConfig:
         Args:
             config (list[str]): Section of config.
 
+        Raises:
+            ConfigException: If required section missing.
+
         Returns:
             EvaluateConfig: Class representing section of config.
         """
-        return cls(
-            n_molecules=config.get("n_molecules", 1024),
-            subset_size=config.get("subset_size", 50),
-        )
+        try:
+            return cls(
+                n_molecules=config["n_molecules"],
+                subset_size=config["subset_size"],
+            )
+
+        except KeyError as e:
+            raise ConfigException("Required section missing:", e)
