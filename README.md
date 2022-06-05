@@ -64,6 +64,8 @@ The structure of the preprocessing config file is described in the [config docs]
 
 TODO
 
+The structure of the training config file is described in the [config docs](docs/config.md#training).
+
 ## Analysis
 
 TODO

@@ -131,7 +131,8 @@ evaluate:
 
 **dataset**
 
-TODO
+Here you can configure the Tensorflow [input pipeline](https://www.tensorflow.org/guide/data).
+
 
 Example:
 ```yaml
@@ -140,9 +141,12 @@ dataset:
     batch_size: 2048
 ```
 
+The [shuffling](https://www.tensorflow.org/api_docs/python/tf/data/Dataset#shuffle) of the dataset is configured by *buffer_size*.
+The size of the [padded batch](https://www.tensorflow.org/api_docs/python/tf/data/Dataset#padded_batch) is configured by *batch_size*.
+
 **model**
 
-TODO
+Here you can configure the model architecture and the number of epochs to train (optional, defaults to 100).
 
 Example:
 ```yaml
@@ -154,9 +158,13 @@ model:
     epochs: 100
 ```
 
+The first layer is configured by *embedding_dim*, the size of the vector the input integers are transformed into.
+The second layer is configured by *lstm_units* and *dropout* (optional, defaults to 0).
+Early stopping is specified by *patience* (optional, defaults to 5).
+
 **evaluate**
 
-TODO
+Here you can configure the model evaluation report.
 
 Example:
 ```yaml
@@ -164,3 +172,7 @@ evaluate:
     n_molecules: 1024
     subset_size: 50
 ```
+
+The number of molecules to generate is configured by *n_molecules*.
+The number of molecules to draw is configured by *subset_size*,
+which must be less than the number of molecules generated.
