@@ -112,4 +112,55 @@ Hence, the total size of the validation and test splits should be less than 1.
 
 ## Training
 
+The training config yml file should have the following structure:
+
+```yaml
+dataset:
+    buffer_size: <numeric>
+    batch_size: <numeric>
+model:
+    embedding_dim: <numeric>
+    lstm_units: <numeric>
+    dropout: <numeric>
+    patience: <numeric>
+    epochs: <numeric>
+evaluate:
+    n_molecules: <numeric>
+    subset_size: <numeric>
+```
+
+**dataset**
+
 TODO
+
+Example:
+```yaml
+dataset:
+    buffer_size: 1000000
+    batch_size: 2048
+```
+
+**model**
+
+TODO
+
+Example:
+```yaml
+model:
+    embedding_dim: 64
+    lstm_units: 128
+    dropout: 0.5
+    patience: 5
+    epochs: 100
+```
+
+**evaluate**
+
+TODO
+
+Example:
+```yaml
+evaluate:
+    n_molecules: 1024
+    subset_size: 50
+```
