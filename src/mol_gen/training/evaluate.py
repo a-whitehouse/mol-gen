@@ -11,6 +11,7 @@ from rdkit.Chem import Mol, MolFromSmiles
 from rdkit.Chem.Draw import MolsToGridImage
 from selfies import decoder
 
+from mol_gen.config.training.evaluate import EvaluateConfig
 from mol_gen.preprocessing.filter import DESCRIPTOR_TO_FUNCTION
 
 
@@ -20,6 +21,7 @@ def create_model_evaluation_report(
     checkpoint_dir: Path | str,
     train_dir: Path | str,
     string_lookup_config_filepath: Path | str,
+    config: EvaluateConfig,
 ):
     """Create HTML report from notebook template for evaluating model checkpoints.
 
@@ -29,6 +31,7 @@ def create_model_evaluation_report(
         checkpoint_dir (Path | str): Path to directory to save trained models.
         train_dir (Path | str): Path to training set directory to read SELFIES as text.
         string_lookup_config_filepath (Path | str): Path to string lookup config.
+        config (EvaluateConfig): Config with number of molecules to generate and draw.
     """
     with TemporaryDirectory() as temp_dir:
         notebook_path = Path(temp_dir) / "notebook.ipynb"
@@ -39,6 +42,8 @@ def create_model_evaluation_report(
                 "train_dir": str(train_dir),
                 "checkpoint_dir": str(checkpoint_dir),
                 "string_lookup_config_filepath": str(string_lookup_config_filepath),
+                "n_molecules": config.n_molecules,
+                "subset_size": config.subset_size,
             },
         )
         write_notebook_as_html(notebook_path, output_path)
@@ -114,7 +119,7 @@ def calculate_percent_unique(values: list[str]) -> float:
     return round(100 * (len(unique_values) / len(values)))
 
 
-def draw_subset_selfies(selfies: list[str], subset_size: int = 100):
+def draw_subset_selfies(selfies: list[str], subset_size: int):
     """Draw subset of SELFIES as molecule grid image.
 
     Args:
@@ -123,7 +128,7 @@ def draw_subset_selfies(selfies: list[str], subset_size: int = 100):
     """
     mols = get_valid_molecules_from_selfies(selfies)
     subset_mols = np.random.choice(mols, subset_size, replace=False)
-    return MolsToGridImage(subset_mols, subImgSize=(500, 500), molsPerRow=5, maxMols=50)
+    return MolsToGridImage(subset_mols, subImgSize=(500, 500), molsPerRow=2, maxMols=50)
 
 
 def plot_descriptor_distributions(selfies: list[str], bins: int = 10):

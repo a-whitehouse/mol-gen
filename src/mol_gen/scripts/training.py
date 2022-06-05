@@ -70,4 +70,5 @@ def run_training(config, input, output):
         checkpoint_dir,
         train_dir,
         string_lookup_filepath,
+        config.evaluate,
     )

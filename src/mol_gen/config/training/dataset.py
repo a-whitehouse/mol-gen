@@ -20,10 +20,10 @@ class DatasetConfig:
             config (list[str]): Section of config.
 
         Raises:
-            ConfigException: If requested convert method unrecognised.
+            ConfigException: If required section missing.
 
         Returns:
-            ConvertConfig: Class representing section of config.
+            DatasetConfig: Class representing section of config.
         """
         try:
             return cls(
