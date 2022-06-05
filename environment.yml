@@ -1,7 +1,7 @@
 name: molGenEnv
 channels:
   - conda-forge
-  - defaults
+  - nodefaults
 dependencies:
   # Linters
   - black
