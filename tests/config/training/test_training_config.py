@@ -3,6 +3,7 @@ import yaml
 
 from mol_gen.config.training import TrainingConfig
 from mol_gen.config.training.dataset import DatasetConfig
+from mol_gen.config.training.evaluate import EvaluateConfig
 from mol_gen.config.training.model import ModelConfig
 
 
@@ -18,6 +19,7 @@ class TestTrainingConfig:
                 "patience": 2,
                 "epochs": 50,
             },
+            "evaluate": {"n_molecules": 100, "subset_size": 25},
         }
 
     def test_parse_config_completes_given_valid_config_section(
@@ -68,6 +70,23 @@ class TestTrainingConfig:
                 "patience": 2,
                 "epochs": 50,
             }
+        )
+
+    def test_parse_config_sets_expected_evaluate_config_given_valid_config_section(
+        self, valid_config_section
+    ):
+        config = TrainingConfig.parse_config(valid_config_section)
+
+        assert isinstance(config.evaluate, EvaluateConfig)
+
+    def test_parse_config_calls_evaluate_config_as_expected(
+        self, mocker, valid_config_section
+    ):
+        spy_config = mocker.spy(EvaluateConfig, "parse_config")
+        TrainingConfig.parse_config(valid_config_section)
+
+        spy_config.assert_called_once_with(
+            {"n_molecules": 100, "subset_size": 25},
         )
 
     @pytest.fixture

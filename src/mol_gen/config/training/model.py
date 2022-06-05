@@ -23,10 +23,10 @@ class ModelConfig:
             config (list[str]): Section of config.
 
         Raises:
-            ConfigException: If requested convert method unrecognised.
+            ConfigException: If required section missing.
 
         Returns:
-            ConvertConfig: Class representing section of config.
+            ModelConfig: Class representing section of config.
         """
         try:
             return cls(

@@ -5,6 +5,7 @@ from typing import Any
 from attrs import frozen
 
 from mol_gen.config.training.dataset import DatasetConfig
+from mol_gen.config.training.evaluate import EvaluateConfig
 from mol_gen.config.training.model import ModelConfig
 from mol_gen.utils import read_yaml_config_file
 
@@ -13,6 +14,7 @@ from mol_gen.utils import read_yaml_config_file
 class TrainingConfig:
     dataset: DatasetConfig
     model: ModelConfig
+    evaluate: EvaluateConfig
 
     @classmethod
     def parse_config(cls, config: dict[str, Any]) -> TrainingConfig:
@@ -30,6 +32,7 @@ class TrainingConfig:
         return cls(
             DatasetConfig.parse_config(config["dataset"]),
             ModelConfig.parse_config(config["model"]),
+            EvaluateConfig.parse_config(config["evaluate"]),
         )
 
     @classmethod

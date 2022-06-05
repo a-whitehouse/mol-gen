@@ -24,6 +24,7 @@ def valid_config_section():
             "patience": 5,
             "epochs": 2,
         },
+        "evaluate": {"n_molecules": 10, "subset_size": 2},
     }
 
 
