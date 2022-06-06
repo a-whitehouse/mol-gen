@@ -15,38 +15,44 @@ from mol_gen.config.training.evaluate import EvaluateConfig
 from mol_gen.preprocessing.filter import DESCRIPTOR_TO_FUNCTION
 
 
-def create_model_evaluation_report(
+def create_model_evaluation_reports(
     template_path: Path | str,
-    output_path: Path | str,
+    output_dir: Path | str,
     checkpoint_dir: Path | str,
     train_dir: Path | str,
     string_lookup_config_filepath: Path | str,
     config: EvaluateConfig,
 ):
-    """Create HTML report from notebook template for evaluating model checkpoints.
+    """Create HTML reports from notebook template for evaluating model checkpoints.
 
     Args:
         template_path (Path | str): Path to model evaluation report notebook template.
-        output_path (Path | str): Path to write output HTML report.
+        output_dir (Path | str): Path to directory to write output HTML reports.
         checkpoint_dir (Path | str): Path to directory to save trained models.
         train_dir (Path | str): Path to training set directory to read SELFIES as text.
         string_lookup_config_filepath (Path | str): Path to string lookup config.
         config (EvaluateConfig): Config with number of molecules to generate and draw.
     """
-    with TemporaryDirectory() as temp_dir:
-        notebook_path = Path(temp_dir) / "notebook.ipynb"
-        pm.execute_notebook(
-            template_path,
-            notebook_path,
-            parameters={
-                "train_dir": str(train_dir),
-                "checkpoint_dir": str(checkpoint_dir),
-                "string_lookup_config_filepath": str(string_lookup_config_filepath),
-                "n_molecules": config.n_molecules,
-                "subset_size": config.subset_size,
-            },
-        )
-        write_notebook_as_html(notebook_path, output_path)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for model_filepath in Path(checkpoint_dir).glob("model.*.h5"):
+        with TemporaryDirectory() as temp_dir:
+            notebook_path = Path(temp_dir) / "notebook.ipynb"
+            pm.execute_notebook(
+                template_path,
+                notebook_path,
+                parameters={
+                    "train_dir": str(train_dir),
+                    "checkpoint_path": str(model_filepath),
+                    "string_lookup_config_path": str(string_lookup_config_filepath),
+                    "n_molecules": config.n_molecules,
+                    "subset_size": config.subset_size,
+                },
+            )
+
+            output_path = output_dir / f"{model_filepath.name}.html"
+            write_notebook_as_html(notebook_path, output_path)
 
 
 def write_notebook_as_html(input_path: Path | str, output_path: Path | str) -> None:
