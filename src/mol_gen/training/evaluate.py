@@ -10,49 +10,81 @@ from nbconvert import HTMLExporter
 from rdkit.Chem import Mol, MolFromSmiles
 from rdkit.Chem.Draw import MolsToGridImage
 from selfies import decoder
+from tensorflow.keras.callbacks import Callback
 
 from mol_gen.config.training.evaluate import EvaluateConfig
 from mol_gen.preprocessing.filter import DESCRIPTOR_TO_FUNCTION
 
 
-def create_model_evaluation_reports(
-    template_path: Path | str,
-    output_dir: Path | str,
-    checkpoint_dir: Path | str,
+class ReportCheckpoint(Callback):
+    def __init__(
+        self,
+        train_dir: Path | str,
+        checkpoint_path: Path | str,
+        report_path: Path | str,
+        string_lookup_path: Path | str,
+        template_path: Path | str,
+        config: EvaluateConfig,
+    ):
+        self.train_dir = train_dir
+        self.checkpoint_path = checkpoint_path
+        self.report_path = report_path
+        self.string_lookup_path = string_lookup_path
+        self.template_path = template_path
+        self.evaluate_config = config
+
+        super().__init__()
+
+    def on_epoch_end(self, epoch, logs=None):
+        """Execute on end of epoch."""
+        report_path = self.report_path.format(epoch)
+        checkpoint_path = self.checkpoint_path.format(epoch)
+
+        create_model_evaluation_report(
+            train_dir=self.train_dir,
+            checkpoint_path=checkpoint_path,
+            report_path=report_path,
+            template_path=self.template_path,
+            string_lookup_path=self.string_lookup_path,
+            config=self.evaluate_config,
+        )
+
+
+def create_model_evaluation_report(
     train_dir: Path | str,
-    string_lookup_config_filepath: Path | str,
+    checkpoint_path: Path | str,
+    report_path: Path | str,
+    template_path: Path | str,
+    string_lookup_path: Path | str,
     config: EvaluateConfig,
 ):
-    """Create HTML reports from notebook template for evaluating model checkpoints.
+    """Create HTML report from notebook template for evaluating model checkpoint.
 
     Args:
-        template_path (Path | str): Path to model evaluation report notebook template.
-        output_dir (Path | str): Path to directory to write output HTML reports.
-        checkpoint_dir (Path | str): Path to directory to save trained models.
         train_dir (Path | str): Path to training set directory to read SELFIES as text.
-        string_lookup_config_filepath (Path | str): Path to string lookup config.
+        checkpoint_path (Path | str): Path to trained model checkpoint.
+        report_path (Path | str): Path to write output HTML report.
+        template_path (Path | str): Path to model evaluation report notebook template.
+        string_lookup_path (Path | str): Path to string lookup config.
         config (EvaluateConfig): Config with number of molecules to generate and draw.
     """
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    Path(report_path).parent.mkdir(parents=True, exist_ok=True)
 
-    for model_filepath in Path(checkpoint_dir).glob("model.*.h5"):
-        with TemporaryDirectory() as temp_dir:
-            notebook_path = Path(temp_dir) / "notebook.ipynb"
-            pm.execute_notebook(
-                template_path,
-                notebook_path,
-                parameters={
-                    "train_dir": str(train_dir),
-                    "checkpoint_path": str(model_filepath),
-                    "string_lookup_config_path": str(string_lookup_config_filepath),
-                    "n_molecules": config.n_molecules,
-                    "subset_size": config.subset_size,
-                },
-            )
+    with TemporaryDirectory() as temp_dir:
+        notebook_path = Path(temp_dir) / "notebook.ipynb"
+        pm.execute_notebook(
+            template_path,
+            notebook_path,
+            parameters={
+                "train_dir": str(train_dir),
+                "checkpoint_path": str(checkpoint_path),
+                "string_lookup_config_path": str(string_lookup_path),
+                "n_molecules": config.n_molecules,
+                "subset_size": config.subset_size,
+            },
+        )
 
-            output_path = output_dir / f"{model_filepath.name}.html"
-            write_notebook_as_html(notebook_path, output_path)
+        write_notebook_as_html(notebook_path, report_path)
 
 
 def write_notebook_as_html(input_path: Path | str, output_path: Path | str) -> None:

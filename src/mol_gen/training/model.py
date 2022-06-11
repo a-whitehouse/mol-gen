@@ -58,7 +58,7 @@ def get_callbacks(
     report_template_path: Path | str,
     string_lookup_path: Path | str,
     config: TrainingConfig,
-) -> None:
+) -> list[Callback]:
     """Get callbacks to add to model training loop.
 
     Args:
@@ -69,6 +69,9 @@ def get_callbacks(
         report_template_path (Path | str): Path to model evaluation report template.
         string_lookup_path (Path | str): Path to string lookup config.
         config (TrainingConfig): Config with training and evaluation parameters.
+
+    Returns:
+        list[Callback]: Configured callbacks.
     """
     checkpoint_path = str(Path(checkpoint_dir) / "model.{epoch:02d}.h5")
     report_path = str(Path(report_dir) / "model.{epoch:02d}.html")
