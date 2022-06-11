@@ -6,8 +6,7 @@ from pyprojroot import here
 
 from mol_gen.config.training import TrainingConfig
 from mol_gen.training.dataset import get_selfies_dataset
-from mol_gen.training.evaluate import create_model_evaluation_report
-from mol_gen.training.model import get_compiled_model, train_model
+from mol_gen.training.model import get_callbacks, get_compiled_model, train_model
 from mol_gen.training.string_lookup import (
     get_selfies_string_lookup_layer,
     write_string_lookup_to_json,
@@ -34,22 +33,22 @@ def run_training(config, input, output):
 
     train_dir = input_dir / "selfies" / "train"
     validate_dir = input_dir / "selfies" / "validate"
-    token_counts_filepath = input_dir / "selfies" / "token_counts.csv"
+    token_counts_path = input_dir / "selfies" / "token_counts.csv"
 
-    string_lookup_filepath = output_dir / "string_lookup.json"
+    string_lookup_path = output_dir / "string_lookup.json"
     checkpoint_dir = output_dir / "checkpoints"
+    report_dir = output_dir / "reports"
     log_dir = output_dir / "logs"
-    html_report_filepath = output_dir / "model_evaluation_report.html"
 
-    report_template_filepath = (
+    report_template_path = (
         here() / "notebooks" / "templates" / "model_evaluation_report.ipynb"
     )
 
     config = TrainingConfig.from_file(config)
 
-    vocabulary = pd.read_csv(token_counts_filepath)["token"].to_list()
+    vocabulary = pd.read_csv(token_counts_path)["token"].to_list()
     string_to_integer_layer = get_selfies_string_lookup_layer(vocabulary)
-    write_string_lookup_to_json(string_to_integer_layer, string_lookup_filepath)
+    write_string_lookup_to_json(string_to_integer_layer, string_lookup_path)
 
     training_data = get_selfies_dataset(
         train_dir, config.dataset, string_to_integer_layer
@@ -60,15 +59,21 @@ def run_training(config, input, output):
 
     vocab_size = string_to_integer_layer.vocabulary_size()
     model = get_compiled_model(config.model, vocab_size)
-    train_model(
-        checkpoint_dir, log_dir, model, training_data, validation_data, config.model
+
+    callbacks = get_callbacks(
+        checkpoint_dir,
+        log_dir,
+        report_dir,
+        train_dir,
+        report_template_path,
+        string_lookup_path,
+        config,
     )
 
-    create_model_evaluation_report(
-        report_template_filepath,
-        html_report_filepath,
-        checkpoint_dir,
-        train_dir,
-        string_lookup_filepath,
-        config.evaluate,
+    train_model(
+        model,
+        training_data,
+        validation_data,
+        callbacks,
+        config.model,
     )

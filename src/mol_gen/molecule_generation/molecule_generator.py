@@ -61,7 +61,9 @@ class MoleculeGenerator:
         )
         return tf.sparse.to_dense(sparse_mask)
 
-    def generate_molecules(self, n_molecules: int, temperature: float = 1) -> list[str]:
+    def generate_molecules(
+        self, n_molecules: int, temperature: float = 1, max_length: int | None = None
+    ) -> list[str]:
         """Generate molecules encoded as SELFIES.
 
         Args:
@@ -106,6 +108,10 @@ class MoleculeGenerator:
             # Only add to completed molecules if new completed molecules present
             if len(new_mols):
                 complete_mols = np.append(complete_mols, new_mols, axis=0)
+
+            # Stop loop if maximum length exceeded
+            if (max_length is not None) and (mols.shape[1] > max_length):
+                break
 
         # Get corresponding SELFIES tokens from integers
         mols = self.integer_to_string_layer(complete_mols)
