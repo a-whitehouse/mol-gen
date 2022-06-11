@@ -78,7 +78,7 @@ def get_callbacks(
 
     callbacks = [
         tf.keras.callbacks.EarlyStopping(
-            patience=config.patience,
+            patience=config.model.patience,
         ),
         tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path),
         ReportCheckpoint(
@@ -87,7 +87,7 @@ def get_callbacks(
             report_path=report_path,
             string_lookup_path=string_lookup_path,
             template_path=report_template_path,
-            config=config,
+            config=config.evaluate,
         ),
         tf.keras.callbacks.TensorBoard(log_dir=log_dir),
     ]

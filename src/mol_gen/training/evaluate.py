@@ -26,19 +26,20 @@ class ReportCheckpoint(Callback):
         template_path: Path | str,
         config: EvaluateConfig,
     ):
-        self.train_dir = train_dir
-        self.checkpoint_path = checkpoint_path
-        self.report_path = report_path
-        self.string_lookup_path = string_lookup_path
-        self.template_path = template_path
+        self.train_dir = str(train_dir)
+        self.checkpoint_path = str(checkpoint_path)
+        self.report_path = str(report_path)
+        self.string_lookup_path = str(string_lookup_path)
+        self.template_path = str(template_path)
         self.evaluate_config = config
 
         super().__init__()
 
     def on_epoch_end(self, epoch, logs=None):
         """Execute on end of epoch."""
-        report_path = self.report_path.format(epoch)
-        checkpoint_path = self.checkpoint_path.format(epoch)
+        epoch += 1
+        report_path = self.report_path.format(epoch=epoch)
+        checkpoint_path = self.checkpoint_path.format(epoch=epoch)
 
         create_model_evaluation_report(
             train_dir=self.train_dir,

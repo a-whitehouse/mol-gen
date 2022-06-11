@@ -7,3 +7,6 @@ model:
     dropout: 0.5
     patience: 5
     epochs: 100
+evaluate:
+    n_molecules: 1024
+    subset_size: 50
