@@ -9,4 +9,4 @@ model:
     epochs: 100
 evaluate:
     n_molecules: 1024
-    subset_size: 50
+    subset_size: 100

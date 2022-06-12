@@ -37,6 +37,8 @@ Example:
 ```yaml
 convert:
     - neutralise_salts
+    - remove_fragments
+    - remove_isotopes
     - remove_stereochemistry
 ```
 

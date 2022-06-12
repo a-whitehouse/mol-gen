@@ -7,6 +7,7 @@ import nbformat
 import numpy as np
 import papermill as pm
 from nbconvert import HTMLExporter
+from rdkit import RDLogger
 from rdkit.Chem import Mol, MolFromSmiles
 from rdkit.Chem.Draw import MolsToGridImage
 from selfies import decoder
@@ -14,6 +15,8 @@ from tensorflow.keras.callbacks import Callback
 
 from mol_gen.config.training.evaluate import EvaluateConfig
 from mol_gen.preprocessing.filter import DESCRIPTOR_TO_FUNCTION
+
+RDLogger.DisableLog("rdApp.*")
 
 
 class ReportCheckpoint(Callback):
@@ -167,7 +170,9 @@ def draw_subset_selfies(selfies: list[str], subset_size: int):
     """
     mols = get_valid_molecules_from_selfies(selfies)
     subset_mols = np.random.choice(mols, subset_size, replace=False)
-    return MolsToGridImage(subset_mols, subImgSize=(500, 500), molsPerRow=2, maxMols=50)
+    return MolsToGridImage(
+        subset_mols, subImgSize=(500, 500), molsPerRow=2, maxMols=subset_size
+    )
 
 
 def plot_descriptor_distributions(selfies: list[str], bins: int = 10):
