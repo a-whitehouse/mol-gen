@@ -10,13 +10,21 @@ This project is inspired by the 2018 research paper [Generative Recurrent Networ
 It is quite readable, and gives a nice demonstration of the use of neural networks with [LSTM layers](https://en.wikipedia.org/wiki/Long_short-term_memory) to generate novel molecules after training on a curated [ChEMBL](https://www.ebi.ac.uk/chembl/) dataset.
 I also found the following 2021 review [De novo molecular design and generative models](https://www.sciencedirect.com/science/article/pii/S1359644621002531) by Meyers *et al.* helpful in gaining a broader understanding of the field.
 
+Another tool I wanted to try out is the use of Self-Referencing Embedded Strings (SELFIES) in place of SMILES strings for the encoding of molecules.
+SELFIES are a [recent development](https://iopscience.iop.org/article/10.1088/2632-2153/aba947) that allow molecules to be represented in a language that is easier for computers to represent,
+avoiding the learning of complex syntax that is required for SMILES strings.
+Whilst it is possible to have a SMILES string that cannot be parsed due to incorrect grammar,
+it is much more difficult to do so with SELFIES.
+Hence, using SELFIES for training recurrent neural networks should afford better results,
+as training will be able to focus on the specifics of molecular structure rather than syntax.
+
 Whilst I have a background in chemistry, it is in synthetic lab-based medicinal chemistry rather than hardcore cheminformatics.
 I first learned Python in 2018 for fun during my PhD on [fragment-based methods](https://pubs.acs.org/doi/10.1021/acs.jmedchem.9b00809), and one of the first test projects I made was on the design of fragments from scratch, AKA *de novo* molecule generation.
 You would specify a molecular formula, e.g. C<sub>4</sub>NO, and the program would recursively generate all possible molecules based on rules that I hardcoded.
 I quickly ran into the problem of exponential growth, and many of the molecules generated were chemically implausible.
 After a few weeks, I put this project on indefinite hold and focused my efforts elsewhere.
 
-This new project is my naive exploration on the use of [recurrent neural networks (RNNs)](https://en.wikipedia.org/wiki/Recurrent_neural_network) for *de novo* molecule generation, as in the paper by Gupta *et al.* and many other papers that I haven't had the time to read.
+This new project is my naive exploration on the use of [recurrent neural networks (RNNs)](https://en.wikipedia.org/wiki/Recurrent_neural_network) for *de novo* molecule generation using SELFIES.
 By doing so, I hope to gain a better understanding of RNNs, LSTMs, variational autoencoders, and cheminformatics in general.
 I will definitely retread ground that was covered by previous work, but I have to start somewhere.
 
@@ -43,10 +51,10 @@ conda activate molGenEnv
 
 For preprocessing I parallelised the application of the [MoleculePreprocessor](src/mol_gen/preprocessing/preprocessor.py) to the input parquet dataframe through a Dask [distributed scheduler](src/mol_gen/preprocessing/dask.py).
 This was able to provide a 4-fold speedup on my 6-core AMD Ryzen 5 5600X Processor.
-The use of Dask also allows the preprocessing step to handle larger-then-memory datasets, which was very useful for my PC with 16GB RAM.
+The use of Dask also allows the preprocessing step to handle larger-then-memory datasets, which was very useful for when my PC only had 16 GB RAM.
 
-For model training I used my personal computer with a Nvidia GeForce RTX 3080 GPU.
-The libraries Cudnn, Cudatoolkit and tensorflow-gpu in the environment allow Tensorflow to make use of the GPU without extra effort.
+For model training I made use of my PC's GPU, a GeForce RTX 3080 GPU.
+The libraries Cudnn, Cudatoolkit and tensorflow-gpu in the environment allow Tensorflow to do this without extra effort.
 If you attempt training without a CUDA-enabled GPU, training will be significantly slower.
 
 
@@ -220,6 +228,14 @@ The generate step will create a text file containing SELFIES:
 [SH1+1][=N+1][=Branch1][Branch2][=C][C][=C][C][C][N][C][C][C][C][C][Ring1][=Branch1]
 [#C][=C][C][=C][C][Branch1][=Branch2][C][=N][C][=N][N][Ring1][Branch1][C][=N][Ring1][N]
 ```
+
+## Examples
+
+### All Drug-Like
+
+The "all drug-like" example directory shows the outcome from training on a dataset of 60 million molecules.
+This dataset was obtained from the original PubChem dataset as [described previously](#preprocess) using Lipinski's rules with no structural similarity filtering.
+
 
 ## Further Work
 
