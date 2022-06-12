@@ -51,10 +51,17 @@ I personally downloaded a large [dataset](https://ftp.ncbi.nlm.nih.gov/pubchem/C
 
 With the environment activated as [described previously](#environment-setup),
 you should have access to the `mol-gen` entry point.
-The available commands can be viewed by:
+The available commands (preprocess, train and generate) can be viewed by:
 
 ```
 mol-gen --help
+```
+
+Arguments for each command can be viewed similarly.
+For example:
+
+```
+mol-gen preprocess --help
 ```
 
 ### Preprocess
@@ -83,7 +90,7 @@ preprocess --config <path to config file> --input <path to dataset> --column <na
 For example:
 
 ```
-mol-gen preprocess --config examples\all_drug_like\preprocessing.yml --input tests\data\chembl.parquet --column SMILES --output data\all_drug_like
+mol-gen preprocess --config examples\all_drug_like\preprocessing.yml --input tests\data\chembl.parquet --column SMILES --output examples\test_run\preprocessed
 ```
 
 The preprocessing step will create the following directory structure in the output directory:
@@ -121,9 +128,55 @@ A token counts file is also provided, showing the total counts for each SELFIES 
 
 ### Train
 
-TODO
+The training step allows you to train a recurrent neural network on the preprocessed SELFIES.
+It is designed around Tensorflow, and executes the following:
+1. Setup of an [input pipeline](https://www.tensorflow.org/guide/data) from the preprocessed SELFIES dataset.
+2. Compiling of a Keras model with callbacks.
+3. Fitting of the model.
 
+The input pipeline shuffles the dataset, pads the SELFIES with start- and end-of-sequence characters,
+then tokenises the SELFIES using the [token counts](C:\Users\ajw37\Documents\mol-gen\tests\data\trained\string_lookup.json) to construct a vocabulary.
+The tokenised molecules are organised into batches of the same length.
+The molecules are finally split to input and target sequences that are shifted by one character relative to each other.
+
+As with preprocess, training is designed to be configurable so you can train the neural networks with different hyperparameters.
+To achieve this, the training step requires a config file.
 The structure of the training config file is described in the [config docs](docs/config.md#training).
+
+Once you have a config file you can run the training step on a preprocessed dataset of SELFIES:
+
+```
+train --config <path to config file> --input <path to preprocessed dataset> --output <path to output directory>
+```
+
+For example:
+
+```
+mol-gen train --config examples\all_drug_like\training.yml --input examples\test_run\preprocessed --output examples\test_run\trained
+```
+
+The training step will create the following directory structure in the output directory:
+
+```
+<output directory>
+├── checkpoints
+│   ├── model.01.h5
+│   ├── model.02.h5
+│   ├── model.03.h5
+│   └── ...
+├── logs
+├── reports
+│   ├── model.01.html
+│   ├── model.02.html
+│   ├── model.03.html
+│   └── ...
+└── string_lookup.json
+```
+
+The checkpoints are versions of the model saved after each epoch,
+and can be [loaded by Tensorflow](https://www.tensorflow.org/tutorials/keras/save_and_load).
+HTML reports are also generated for each checkpoint,
+allowing you to monitor the performance of each checkpoint model.
 
 ### Generate
 
