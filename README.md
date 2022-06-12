@@ -220,3 +220,14 @@ The generate step will create a text file containing SELFIES:
 [SH1+1][=N+1][=Branch1][Branch2][=C][C][=C][C][C][N][C][C][C][C][C][Ring1][=Branch1]
 [#C][=C][C][=C][C][Branch1][=Branch2][C][=N][C][=N][N][Ring1][Branch1][C][=N][Ring1][N]
 ```
+
+## Further Work
+
+I have only just got to the stage where the report generation is successfully integrated with Tensorflow's callbacks system.
+The next step would be to focus more on improving the content and overall presentation of the reports.
+
+The customisation of the model architecture is currently limited,
+as a lot of my attention was focused on getting the preprocessing and molecule generation steps to work.
+The model only has one recurrent layer, so it would be interesting to explore more complex models.
+
+I need unit tests in the model evaluation and molecule generation sections of the codebase.
