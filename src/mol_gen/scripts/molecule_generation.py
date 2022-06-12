@@ -20,9 +20,9 @@ from mol_gen.molecule_generation.molecule_generator import MoleculeGenerator
     help="Number of molecules to generate.",
 )
 def run_molecule_generation(
-    model_path: str,
-    vocab_path: str,
-    output_path: str,
+    model: str,
+    vocab: str,
+    output: str,
     n_mols: int,
 ) -> None:
     """Generate molecules with trained model.
@@ -33,9 +33,10 @@ def run_molecule_generation(
         output_dir (str): Path to file to write generated molecules.
         n_mols (int): Number of molecules to generate.
     """
-    Path(output_path).parent.mkdir(exist_ok=True, parents=True)
+    output_path = Path(output)
+    output_path.parent.mkdir(exist_ok=True, parents=True)
 
-    mol_generator = MoleculeGenerator.from_files(model_path, vocab_path)
+    mol_generator = MoleculeGenerator.from_files(model, vocab)
     mols = mol_generator.generate_molecules(n_mols)
 
     with open(output_path, "w") as fh:

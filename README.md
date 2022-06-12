@@ -84,7 +84,7 @@ To achieve this, you can expand the config to include structure filters as descr
 Once you have a config file you can run the preprocessing step on a dataset of SMILES strings:
 
 ```
-preprocess --config <path to config file> --input <path to dataset> --column <name of column in dataset> --output <path to output directory>
+mol-gen preprocess --config <path to config file> --input <path to dataset> --column <name of column in dataset> --output <path to output directory>
 ```
 
 For example:
@@ -146,7 +146,7 @@ The structure of the training config file is described in the [config docs](docs
 Once you have a config file you can run the training step on a preprocessed dataset of SELFIES:
 
 ```
-train --config <path to config file> --input <path to preprocessed dataset> --output <path to output directory>
+mol-gen train --config <path to config file> --input <path to preprocessed dataset> --output <path to output directory>
 ```
 
 For example:
@@ -178,6 +178,34 @@ and can be [loaded by Tensorflow](https://www.tensorflow.org/tutorials/keras/sav
 HTML reports are also generated for each checkpoint,
 allowing you to monitor the performance of each checkpoint model.
 
+The string lookup JSON is the config required to map SELFIES to the tokens used by the models.
+
 ### Generate
 
-TODO
+The molecule generation step allows you to easily generate molecules from the trained model checkpoints.
+
+It takes the string lookup JSON and a model checkpoint created by the train step:
+
+```
+mol-gen generate --model <path to trained model> --vocab <path to string lookup JSON> --output <path to output file> --n-mols <number of molecules to generate>
+```
+
+For example:
+```
+mol-gen generate --model examples\all_drug_like\trained\checkpoints\model.13.h5 --vocab examples\all_drug_like\trained\string_lookup.json --output data\test_run --n-mols 100
+```
+
+The generate step will create a text file containing SELFIES:
+
+```
+[=Branch1][C][=N][C][C][=N][NH1][N][=Ring1][Branch1]
+[Cl+1][=N+1][=N][C][=C][NH1][N][=C][C][Ring1][=Branch1][=S]
+[\O-1][=C][Branch1][Ring1][C][N][C][C][N][C][Branch1][C][C][=O]
+[/NH1-1][=C][Branch1][C][O][C][C][C][C][Branch1][C][Cl][C][Ring1][#Branch1]
+[=N][#C][=N][C][C][=C][Branch1][Branch1][C][C][C][O][O][Ring1][=Branch2]
+[=Branch1][O][C][=C][N][=C][C][=C][C][=C][C][Ring1][=Branch1][=N][Ring1][#Branch2]
+[#SH2][=C][C][=C][C][=C][C][=C][C][=C][C][=C][Ring1][#Branch2][Ring1][=Branch1]
+[C][C][=Branch1][C][=O][N][C][=C][Branch1][C][O][C][=C][C][=N][Ring1][#Branch1]
+[SH1+1][=N+1][=Branch1][Branch2][=C][C][=C][C][C][N][C][C][C][C][C][Ring1][=Branch1]
+[#C][=C][C][=C][C][Branch1][=Branch2][C][=N][C][=N][N][Ring1][Branch1][C][=N][Ring1][N]
+```
