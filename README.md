@@ -22,50 +22,109 @@ I will definitely retread ground that was covered by previous work, but I have t
 
 ## Project Structure
 
-This project is intended to have 3 distinct sections:
-1. Preprocessing of registered molecules to create curated datasets
-2. Training of neural networks on these datasets
-3. Analysis and visualisation on the output of the trained models
+The project is divided into 3 distinct sections:
+1. Preprocessing of molecules to create curated datasets.
+2. Training of neural networks on these datasets.
+3. Generation of molecules from the trained models.
 
-## Environment Setup
+## Prerequisites
 
-I am using an environment with Python 3.9 managed by [Anaconda](https://www.anaconda.com/) and run in Windows.
-To recreate it from my [environment.yml](environment.yml) file, use the following in the command prompt:
+### Environment Setup
+
+The project is based on Python 3.10, with the environment managed by [Anaconda](https://www.anaconda.com/) and run in Windows.
+The environment can be recreated from the [environment.yml](environment.yml) file by:
 
 ```
 conda env create -f environment.yml
 conda activate molGenEnv
 ```
 
-## Development
+### Dataset
 
-I am using [Visual Studio Code](https://code.visualstudio.com/) for my development work.
-You can find the settings I used in my workspace [here](.vscode/settings.json), including the use of the linters [black](https://black.readthedocs.io/en/stable/) and [flake8](https://flake8.pycqa.org/en/latest/).
+The project requires a dataset of molecules to preprocess and train.
+The molecules should be provided as SMILES strings, stored within a column of a parquet file/ directory.
+The small test dataset [chembl.parquet](tests/data/chembl.parquet) is provided for demonstration purposes.
+Actual datasets though should be much larger.
+I personally downloaded a large [dataset](https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Extras/CID-SMILES.gz) of molecules from [PubChem](https://pubchem.ncbi.nlm.nih.gov/).
 
-I use the [pre-commit](https://pre-commit.com/) library to enforce code quality, with my specific git hooks described [here](.pre-commit-config.yaml).
+## Usage
 
-## Preprocessing
+With the environment activated as [described previously](#environment-setup),
+you should have access to the `mol-gen` entry point.
+The available commands can be viewed by:
 
-I have downloaded a large [dataset](https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Extras/CID-SMILES.gz) of molecules from [PubChem](https://pubchem.ncbi.nlm.nih.gov/) for this project.
-Before training I want to preprocess this dataset to neutralise salts, remove stereochemical information, and filter molecules that are not [druglike](https://en.wikipedia.org/wiki/Druglikeness).
-The preprocessing step should be configurable so I can train the neural networks on multiple datasets, each with different properties.
+```
+mol-gen --help
+```
+
+### Preprocess
+
+The preprocessing step allows you to convert, filter and split a dataset of molecules prior to training.
+The SMILES strings are also translated into SELFIES for training.
+The step is designed to be completely configurable so you can train the neural networks on multiple datasets, each with different properties.
 To achieve this, the preprocessing step requires a config file.
-
-To run the preprocessing step, execute the [run_preprocessing.py](scripts/run_preprocessing.py) script:
-```
-preprocess --config <path to config file> --input <path to directory containing full dataset of molecules> --output <path to directory to write preprocessed dataset>
-```
-
-The input directory should contain csv files with a "SMILES" column containing SMILES strings of molecules.
-
 The structure of the preprocessing config file is described in the [config docs](docs/config.md#preprocessing).
 
-## Training
+A typical workflow would be to neutralise salts, remove isotopic and stereochemical information,
+and filter molecules that are not [druglike](https://en.wikipedia.org/wiki/Druglikeness).
+The resultant dataset of SMILES strings would then be converted to SELFIES,
+with 80% kept in the training set and 10% reserved for validation and testing respectively.
+This can all be achieved with the example preprocessing [config file](examples/all_drug_like/preprocessing.yml).
+
+The file can be made more restrictive if desired, for example to only keep molecules that have a Tanimoto similarity score of at least 0.5 to a particular lead compound from a high-throughput screening campaign.
+To achieve this, you can expand the config to include structure filters as described in the [config docs](docs/config.md#preprocessing).
+
+Once you have a config file you can run the preprocessing step on a dataset of SMILES strings:
+
+```
+preprocess --config <path to config file> --input <path to dataset> --column <name of column in dataset> --output <path to output directory>
+```
+
+For example:
+
+```
+mol-gen preprocess --config examples\all_drug_like\preprocessing.yml --input tests\data\chembl.parquet --column SMILES --output data\all_drug_like
+```
+
+The preprocessing step will create the following directory structure in the output directory:
+
+```
+<output directory>
+├── selfies
+│   ├── test
+│   │   ├── 0.part
+│   │   ├── 1.part
+│   │   ├── 2.part
+│   │   └── ...
+│   ├── train
+│   │   ├── 0.part
+│   │   ├── 1.part
+│   │   ├── 2.part
+│   │   └── ...
+│   ├── validate
+│   │   ├── 0.part
+│   │   ├── 1.part
+│   │   ├── 2.part
+│   │   └── ...
+│   └── token_counts.csv
+└── smiles
+    ├── part.0.parquet
+    ├── part.1.parquet
+    ├── part.2.parquet
+    └── ...
+```
+
+The smiles directory contains the converted and filtered SMILES strings stored in parquet format.
+The selfies directory contains the same molecules represented as SELFIES and further split into train, validate and test splits.
+Each split is stored across multiple text files.
+A token counts file is also provided, showing the total counts for each SELFIES token across all splits.
+
+### Train
 
 TODO
 
 The structure of the training config file is described in the [config docs](docs/config.md#training).
 
-## Analysis
+### Generate
 
 TODO
