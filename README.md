@@ -39,6 +39,17 @@ conda env create -f environment.yml
 conda activate molGenEnv
 ```
 
+### Hardware
+
+For preprocessing I parallelised the application of the [MoleculePreprocessor](src/mol_gen/preprocessing/preprocessor.py) to the input parquet dataframe through a Dask [distributed scheduler](src/mol_gen/preprocessing/dask.py).
+This was able to provide a 4-fold speedup on my 6-core AMD Ryzen 5 5600X Processor.
+The use of Dask also allows the preprocessing step to handle larger-then-memory datasets, which was very useful for my PC with 16GB RAM.
+
+For model training I used my personal computer with a Nvidia GeForce RTX 3080 GPU.
+The libraries Cudnn, Cudatoolkit and tensorflow-gpu in the environment allow Tensorflow to make use of the GPU without extra effort.
+If you attempt training without a CUDA-enabled GPU, training will be significantly slower.
+
+
 ### Dataset
 
 The project requires a dataset of molecules to preprocess and train.
