@@ -6,23 +6,17 @@ Andrew Whitehouse
 
 ## Background
 
-This project is inspired by the 2018 research paper [Generative Recurrent Networks for De Novo Drug Design](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5836943/) by Gupta *et al*.
+This project is inspired by the 2018 research paper [Generative Recurrent Networks for De Novo Drug Design](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5836943/).
 It is quite readable, and gives a nice demonstration of the use of neural networks with [LSTM layers](https://en.wikipedia.org/wiki/Long_short-term_memory) to generate novel molecules after training on a curated [ChEMBL](https://www.ebi.ac.uk/chembl/) dataset.
-I also found the following 2021 review [De novo molecular design and generative models](https://www.sciencedirect.com/science/article/pii/S1359644621002531) by Meyers *et al.* helpful in gaining a broader understanding of the field.
+I also found the following 2021 review [De novo molecular design and generative models](https://www.sciencedirect.com/science/article/pii/S1359644621002531) helpful in gaining a broader understanding of the field.
 
-Another tool I wanted to try out is the use of Self-Referencing Embedded Strings (SELFIES) in place of SMILES strings for the encoding of molecules.
-SELFIES are a [recent development](https://iopscience.iop.org/article/10.1088/2632-2153/aba947) that allow molecules to be represented in a language that is easier for computers to represent,
+Another tool I wanted to experiment with is the use of Self-Referencing Embedded Strings (SELFIES) in place of SMILES strings for the encoding of molecules.
+SELFIES are a [recent development](https://iopscience.iop.org/article/10.1088/2632-2153/aba947) that allow molecules to be represented in a language that is easier for computers,
 avoiding the learning of complex syntax that is required for SMILES strings.
 Whilst it is possible to have a SMILES string that cannot be parsed due to incorrect grammar,
 it is much more difficult to do so with SELFIES.
 Hence, using SELFIES for training recurrent neural networks should afford better results,
-as training will be able to focus on the specifics of molecular structure rather than syntax.
-
-Whilst I have a background in chemistry, it is in synthetic lab-based medicinal chemistry rather than hardcore cheminformatics.
-I first learned Python in 2018 for fun during my PhD on [fragment-based methods](https://pubs.acs.org/doi/10.1021/acs.jmedchem.9b00809), and one of the first test projects I made was on the design of fragments from scratch, AKA *de novo* molecule generation.
-You would specify a molecular formula, e.g. C<sub>4</sub>NO, and the program would recursively generate all possible molecules based on rules that I hardcoded.
-I quickly ran into the problem of exponential growth, and many of the molecules generated were chemically implausible.
-After a few weeks, I put this project on indefinite hold and focused my efforts elsewhere.
+as training will be able to focus more on the specifics of molecular structure rather than syntax.
 
 This new project is my naive exploration on the use of [recurrent neural networks (RNNs)](https://en.wikipedia.org/wiki/Recurrent_neural_network) for *de novo* molecule generation using SELFIES.
 By doing so, I hope to gain a better understanding of RNNs, LSTMs, variational autoencoders, and cheminformatics in general.
@@ -50,21 +44,21 @@ conda activate molGenEnv
 ### Hardware
 
 For preprocessing I parallelised the application of the [MoleculePreprocessor](src/mol_gen/preprocessing/preprocessor.py) to the input parquet dataframe through a Dask [distributed scheduler](src/mol_gen/preprocessing/dask.py).
-This was able to provide a 4-fold speedup on my 6-core AMD Ryzen 5 5600X Processor.
+This was able to provide a 4-fold speedup on my 6-core Ryzen 5600X CPU.
 The use of Dask also allows the preprocessing step to handle larger-then-memory datasets, which was very useful for when my PC only had 16 GB RAM.
 
-For model training I made use of my PC's GPU, a GeForce RTX 3080 GPU.
+For model training I made use of my PC's GPU, a GeForce RTX 3080.
 The libraries Cudnn, Cudatoolkit and tensorflow-gpu in the environment allow Tensorflow to do this without extra effort.
-If you attempt training without a CUDA-enabled GPU, training will be significantly slower.
+Training will be significantly slower if you attempt training without a CUDA-enabled GPU.
 
 
 ### Dataset
 
 The project requires a dataset of molecules to preprocess and train.
-The molecules should be provided as SMILES strings, stored within a column of a parquet file/ directory.
+The molecules should be provided initially as SMILES strings, stored within a column of a parquet file/ directory.
 The small test dataset [chembl.parquet](tests/data/chembl.parquet) is provided for demonstration purposes.
 Actual datasets though should be much larger.
-I personally downloaded a large [dataset](https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Extras/CID-SMILES.gz) of molecules from [PubChem](https://pubchem.ncbi.nlm.nih.gov/).
+I personally downloaded a large [dataset](https://ftp.ncbi.nlm.nih.gov/pubchem/Compound/Extras/CID-SMILES.gz) of ~110 million molecules from [PubChem](https://pubchem.ncbi.nlm.nih.gov/).
 
 ## Usage
 
@@ -86,7 +80,7 @@ mol-gen preprocess --help
 ### Preprocess
 
 The preprocessing step allows you to convert, filter and split a dataset of molecules prior to training.
-The SMILES strings are also translated into SELFIES for training.
+It is here that the SMILES strings are translated into SELFIES for training.
 The step is designed to be completely configurable so you can train the neural networks on multiple datasets, each with different properties.
 To achieve this, the preprocessing step requires a config file.
 The structure of the preprocessing config file is described in the [config docs](docs/config.md#preprocessing).
@@ -97,7 +91,7 @@ The resultant dataset of SMILES strings would then be converted to SELFIES,
 with 80% kept in the training set and 10% reserved for validation and testing respectively.
 This can all be achieved with the example preprocessing [config file](examples/all_drug_like/preprocessing.yml).
 
-The file can be made more restrictive if desired, for example to only keep molecules that have a Tanimoto similarity score of at least 0.5 to a particular lead compound from a high-throughput screening campaign.
+The file can be made more restrictive if desired, for example to only keep molecules that have a minimum Tanimoto similarity score to a particular lead compound from a high-throughput screening campaign.
 To achieve this, you can expand the config to include structure filters as described in the [config docs](docs/config.md#preprocessing).
 
 Once you have a config file you can run the preprocessing step on a dataset of SMILES strings:
