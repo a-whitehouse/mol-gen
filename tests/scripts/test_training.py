@@ -41,7 +41,7 @@ def config_path(tmpdir, valid_config_section):
     return config_path
 
 
-class TestRunTraining:
+class TestTraining:
     def test_completes_and_writes_expected_files_given_valid_input(
         self, tmpdir, input_path, config_path
     ):
