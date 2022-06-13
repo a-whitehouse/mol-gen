@@ -1,6 +1,9 @@
+import json
+from pathlib import Path
 from subprocess import run
 
 import pytest
+import tensorflow as tf
 import yaml
 from pyprojroot import here
 
@@ -39,7 +42,10 @@ def config_path(tmpdir, valid_config_section):
 
 
 class TestRunTraining:
-    def test_completes_given_valid_input(self, tmpdir, input_path, config_path):
+    def test_completes_and_writes_expected_files_given_valid_input(
+        self, tmpdir, input_path, config_path
+    ):
+        tmpdir = Path(tmpdir)
         run(
             [
                 "mol-gen",
@@ -53,3 +59,19 @@ class TestRunTraining:
             ],
             check=True,
         )
+
+        # Check model checkpoints
+        checkpoint_files = list(tmpdir.joinpath("checkpoints").glob("model.*.h5"))
+        assert len(checkpoint_files) == 2
+        tf.keras.models.load_model(checkpoint_files[0])
+        tf.keras.models.load_model(checkpoint_files[1])
+
+        # Check model evaluation reports
+        report_files = list(tmpdir.joinpath("reports").glob("model.*.html"))
+        assert len(report_files) == 2
+
+        # Check string lookup JSON
+        string_lookup_file = tmpdir / "string_lookup.json"
+        assert string_lookup_file.exists()
+        with open(string_lookup_file) as fh:
+            json.load(fh)
