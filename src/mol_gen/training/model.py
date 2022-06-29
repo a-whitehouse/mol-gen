@@ -37,7 +37,12 @@ def get_compiled_model(
         )
     )
 
-    model.add(LSTM(config.lstm_units, return_sequences=True, dropout=config.dropout))
+    for layer_config in config.lstm_layers:
+        model.add(
+            LSTM(
+                layer_config.units, return_sequences=True, dropout=layer_config.dropout
+            )
+        )
 
     model.add(Dense(vocab_size))
 
