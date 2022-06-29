@@ -236,8 +236,4 @@ This dataset was obtained from the original PubChem dataset as [described previo
 I have only just got to the stage where the report generation is successfully integrated with Tensorflow's callbacks system.
 The next step would be to focus more on improving the content and overall presentation of the reports.
 
-The customisation of the model architecture is currently limited,
-as a lot of my attention was focused on getting the preprocessing and molecule generation steps to work.
-The model only has one recurrent layer, so it would be interesting to explore more complex models.
-
 I need unit tests in the model evaluation and molecule generation sections of the codebase.
