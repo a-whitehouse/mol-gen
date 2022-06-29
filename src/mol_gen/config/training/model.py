@@ -40,6 +40,9 @@ class ModelConfig:
         except KeyError as e:
             raise ConfigException("Required section missing:", e)
 
+        except TypeError as e:
+            raise ConfigException("Config invalid:", e)
+
 
 @frozen
 class LSTMLayerConfig:
