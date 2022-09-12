@@ -122,8 +122,11 @@ dataset:
     batch_size: <numeric>
 model:
     embedding_dim: <numeric>
-    lstm_units: <numeric>
-    dropout: <numeric>
+    lstm_layers:
+        - units: <numeric>
+          dropout: <numeric>
+        - units: <numeric>
+          dropout: <numeric>
     patience: <numeric>
     epochs: <numeric>
 evaluate:
@@ -154,14 +157,21 @@ Example:
 ```yaml
 model:
     embedding_dim: 64
-    lstm_units: 128
-    dropout: 0.5
+    lstm_layers:
+        - units: 256
+          dropout: 0.3
+        - units: 256
+          dropout: 0.5
     patience: 5
     epochs: 100
 ```
 
 The first layer is configured by *embedding_dim*, the size of the vector the input integers are transformed into.
-The second layer is configured by *lstm_units* and *dropout* (optional, defaults to 0).
+
+The subsequent LSTM layers are configured by *lstm_layers*,
+where you specify *units* and *dropout* (optional, defaults to 0).
+The above example configures 2 LSTM layers, but more can be specified.
+
 Early stopping is specified by *patience* (optional, defaults to 5).
 
 **evaluate**

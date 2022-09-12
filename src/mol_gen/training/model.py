@@ -26,21 +26,25 @@ def get_compiled_model(
     Returns:
         keras.Model: Compiled model.
     """
-    input_layer = Input(shape=(None,))
+    model = keras.Sequential()
+    model.add(Input(shape=(None,)))
 
-    embedding_layer = Embedding(
-        input_dim=vocab_size,
-        output_dim=config.embedding_dim,
-        mask_zero=True,
-    )(input_layer)
-
-    lstm_layer = LSTM(config.lstm_units, return_sequences=True, dropout=config.dropout)(
-        embedding_layer
+    model.add(
+        Embedding(
+            input_dim=vocab_size,
+            output_dim=config.embedding_dim,
+            mask_zero=True,
+        )
     )
 
-    dense_layer = Dense(vocab_size)(lstm_layer)
+    for layer_config in config.lstm_layers:
+        model.add(
+            LSTM(
+                layer_config.units, return_sequences=True, dropout=layer_config.dropout
+            )
+        )
 
-    model = tf.keras.Model(inputs=input_layer, outputs=dense_layer)
+    model.add(Dense(vocab_size))
 
     model.compile(
         tf.optimizers.Adam(1e-2),

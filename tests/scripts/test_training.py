@@ -22,8 +22,10 @@ def valid_config_section():
         },
         "model": {
             "embedding_dim": 64,
-            "lstm_units": 128,
-            "dropout": 0.5,
+            "lstm_layers": [
+                {"units": 64, "dropout": 0.3},
+                {"units": 64, "dropout": 0.5},
+            ],
             "patience": 5,
             "epochs": 2,
         },
