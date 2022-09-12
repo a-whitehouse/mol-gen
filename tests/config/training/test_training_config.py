@@ -14,8 +14,10 @@ class TestTrainingConfig:
             "dataset": {"buffer_size": 1000000, "batch_size": 1024},
             "model": {
                 "embedding_dim": 64,
-                "lstm_units": 128,
-                "dropout": 0.5,
+                "lstm_layers": [
+                    {"units": 64, "dropout": 0.3},
+                    {"units": 64, "dropout": 0.5},
+                ],
                 "patience": 2,
                 "epochs": 50,
             },
@@ -65,8 +67,10 @@ class TestTrainingConfig:
         spy_config.assert_called_once_with(
             {
                 "embedding_dim": 64,
-                "lstm_units": 128,
-                "dropout": 0.5,
+                "lstm_layers": [
+                    {"units": 64, "dropout": 0.3},
+                    {"units": 64, "dropout": 0.5},
+                ],
                 "patience": 2,
                 "epochs": 50,
             }
